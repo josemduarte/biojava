@@ -906,13 +906,15 @@ public class SimpleMMcifConsumer implements MMcifConsumer {
 		structure.getPDBHeader().setBioUnitTranformationMap(transformationMap);
 
 		ArrayList<Matrix4d> ncsOperators = new ArrayList<Matrix4d>();
+		// we always add identity as first operator
+		ncsOperators.add(new Matrix4d(1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1));
 		for (StructNcsOper sNcsOper:structNcsOper) {
 			if (sNcsOper.getCode().equals("generate")) {
 				ncsOperators.add(sNcsOper.getOperator());
 			}
 		}
-		// we only set it if not empty, otherwise remains null
-		if (ncsOperators.size()>0) {
+		// we only set it if not empty (1 operator only means we only have identity), otherwise remains null
+		if (ncsOperators.size()>1) {
 			structure.getCrystallographicInfo().setNcsOperators(
 					(Matrix4d[]) ncsOperators.toArray(new Matrix4d[ncsOperators.size()]));
 		}

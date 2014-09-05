@@ -1616,12 +1616,13 @@ COLUMNS   DATA TYPE         FIELD          DEFINITION
 			if (iGiven == 1) return;
 
 			if (ncsOperators==null) {
-				// we initialise on first pass
+				// we initialise on first pass, adding identity as first operator
 				ncsOperators = new ArrayList<Matrix4d>();
+				ncsOperators.add(new Matrix4d(1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1));
 			}
 
 			if (currentNcsOp==null) {
-				currentNcsOp = new Matrix4d(1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1); // initialised to identity
+				currentNcsOp = new Matrix4d(1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1);
 			}
 
 			currentNcsOp.setElement(rowIndex-1, 0, col1Value);
@@ -2989,7 +2990,8 @@ COLUMNS   DATA TYPE         FIELD          DEFINITION
 			//System.out.println(pdbHeader.getBioUnitTranformationMap().keySet());
 		}
 		
-		if (ncsOperators !=null && ncsOperators.size()>0) {
+		// we only set it if not empty (1 operator only means we only have identity), otherwise remains null
+		if (ncsOperators !=null && ncsOperators.size()>1) {
 			crystallographicInfo.setNcsOperators(
 				(Matrix4d[]) ncsOperators.toArray(new Matrix4d[ncsOperators.size()]));
 		}

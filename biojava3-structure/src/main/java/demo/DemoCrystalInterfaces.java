@@ -48,7 +48,7 @@ public class DemoCrystalInterfaces {
 	public static void main(String[] args) throws Exception {
 
 		
-		String pdbCode = "1smt";
+		String pdbCode = "1auy";
 		
 		AtomCache cache = new AtomCache();
 		cache.setUseMmCif(true);
@@ -63,8 +63,10 @@ public class DemoCrystalInterfaces {
 		
 		SpaceGroup sg = structure.getCrystallographicInfo().getSpaceGroup();
 		
-		System.out.println(sg.getShortSymbol()+" ("+sg.getId()+")");
-		System.out.println("Symmetry operators: "+sg.getNumOperators());
+		if (sg!=null) {
+			System.out.println(sg.getShortSymbol()+" ("+sg.getId()+")");
+			System.out.println("Symmetry operators: "+sg.getNumOperators());
+		}
 		
 		System.out.println("Calculating possible interfaces... (using "+NTHREADS+" CPUs for ASA calculation)");
 		long start = System.currentTimeMillis();
@@ -106,8 +108,6 @@ public class DemoCrystalInterfaces {
 			System.out.println("Transf1: "+SpaceGroup.getAlgebraicFromMatrix(transf1.getMatTransform())+
 					". Transf2: "+SpaceGroup.getAlgebraicFromMatrix(transf2.getMatTransform()));
 	 		
-			int foldType = sg.getAxisFoldType(transf2.getTransformId());
-			AxisAngle4d axisAngle = sg.getRotAxisAngle(transf2.getTransformId());
 			
 			String screwStr = "";
 			if (transf2.getTransformType().isScrew()) {
@@ -118,8 +118,12 @@ public class DemoCrystalInterfaces {
 
 			}
 			
-			
-			System.out.println(" "+foldType+"-fold on axis "+String.format("(%5.2f,%5.2f,%5.2f)",axisAngle.x,axisAngle.y,axisAngle.z)+screwStr);
+			if (sg!=null) {
+				int foldType = sg.getAxisFoldType(transf2.getTransformId());
+				AxisAngle4d axisAngle = sg.getRotAxisAngle(transf2.getTransformId());
+
+				System.out.println(" "+foldType+"-fold on axis "+String.format("(%5.2f,%5.2f,%5.2f)",axisAngle.x,axisAngle.y,axisAngle.z)+screwStr);
+			}
 			
 			System.out.println("Number of contacts: "+interf.getContacts().size());
 			//System.out.println("Number of contacting atoms (from both molecules): "+interf.getNumAtomsInContact());

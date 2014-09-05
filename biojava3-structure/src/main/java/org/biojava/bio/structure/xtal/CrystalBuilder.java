@@ -49,16 +49,21 @@ public class CrystalBuilder {
 	 */
 	private static final boolean INCLUDE_HETATOMS = true;
 	
+	public static final Matrix4d IDENTITY = new Matrix4d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1);
+
 	private Structure structure;
 	private PDBCrystallographicInfo crystallographicInfo;
 	private int numChainsAu;
 	private int numOperatorsSg;
+	private int numOperatorsNcs;
+	
+	private Matrix4d[] operators;
 	
 	private boolean verbose;
 	
 	private int numCells;
 	
-	private ArrayList<CrystalTransform> visited;
+	private ArrayList<Matrix4d> visited;
 	
 
 	
@@ -71,7 +76,7 @@ public class CrystalBuilder {
 		if (structure.isCrystallographic()) {
 			this.numOperatorsSg = this.crystallographicInfo.getSpaceGroup().getMultiplicity();
 		}
-		
+		this.numOperatorsNcs = 1;
 		this.verbose = false;
 		this.numCells = DEF_NUM_CELLS;				
 		
@@ -94,7 +99,7 @@ public class CrystalBuilder {
 	}
 	
 	private void initialiseVisited() {
-		visited = new ArrayList<CrystalTransform>();
+		visited = new ArrayList<Matrix4d>();
 	}
 	
 	/**
@@ -152,7 +157,7 @@ public class CrystalBuilder {
 		Structure[] cell = getUnitCell();
 
 		// The bounding boxes of all AUs of the unit cell		
-		UnitCellBoundingBox bbGrid = new UnitCellBoundingBox(numOperatorsSg, numChainsAu);;
+		UnitCellBoundingBox bbGrid = new UnitCellBoundingBox(numOperatorsSg, numOperatorsNcs, numChainsAu);;
 		// we calculate all the bounds of each of the asym units, those will then be reused and translated
 		bbGrid.setAllBbs(cell, INCLUDE_HETATOMS);
 		
@@ -185,8 +190,12 @@ public class CrystalBuilder {
 						this.crystallographicInfo.getCrystalCell().transfToOrthonormal(transOrth);
 					UnitCellBoundingBox bbGridTrans = bbGrid.getTranslatedBbs(transOrth);
 
-					for (int n=0;n<numOperatorsSg;n++) { 
+					for (int csIdx = 0; csIdx<numOperatorsSg; csIdx++) {
+					for (int ncsIdx = 0; ncsIdx<numOperatorsNcs; ncsIdx++) {
+					
+					//for (int n=0;n<numOperatorsSg*numOperatorsNcs;n++) { 
 
+						int n = csIdx + ncsIdx;
 						// short-cut strategies
 						// 1) we skip first of all if the bounding boxes of the AUs don't overlap
 						if (!bbGrid.getAuBoundingBox(0).overlaps(bbGridTrans.getAuBoundingBox(n), cutoff)) {
@@ -195,10 +204,15 @@ public class CrystalBuilder {
 						}
 
 						// 2) we check if we didn't already see its equivalent symmetry operator partner 													
-						CrystalTransform tt = new CrystalTransform(this.crystallographicInfo.getSpaceGroup(), n);
-						tt.translate(trans);
+						//CrystalTransform tt = new CrystalTransform(this.crystallographicInfo.getSpaceGroup(), n);
+						//tt.translate(trans);
+						Matrix4d tt = new Matrix4d(operators[n]);
+						crystalTranslate(tt, transOrth);
 						if (isRedundant(tt)) { 								
-							if (verbose) skippedRedundant++;								
+							if (verbose) {
+								System.out.println("Skipping redundant transformation: "+transfString(csIdx, ncsIdx, a, b, ncsIdx));
+								skippedRedundant++;								
+							}
 							continue;
 						}
 						addVisited(tt);
@@ -218,15 +232,16 @@ public class CrystalBuilder {
 						
 
 						// 3) an operator can be "self redundant" if it is the inverse of itself (involutory, e.g. all pure 2-folds with no translation)						
-						if (tt.isEquivalent(tt)) { 
+						if (isEquivalent(tt,tt)) { 
 							if (verbose) 
-								System.out.println("Transform "+tt+" is equivalent to itself, will skip half of i-chains to j-chains comparisons");
+								System.out.println("Transform "+transfString(csIdx, ncsIdx, a, b, ncsIdx)+
+										" is equivalent to itself, will skip half of i-chains to j-chains comparisons");
 							// in this case we can't skip the operator, but we can skip half of the matrix comparisons e.g. j>i
 							// we set a flag and do that within the loop below
 							selfEquivalent = true;
 						}
 						
-						if (verbose) System.out.print(tt+" ");
+						if (verbose) System.out.print(transfString(csIdx, ncsIdx, a, b, ncsIdx)+" ");
 						
 						// Now that we know that boxes overlap and operator is not redundant, we have to go to the details 
 						int contactsFound = 0;
@@ -257,7 +272,7 @@ public class CrystalBuilder {
 
 								// finally we've gone through all short-cuts and the 2 chains seem to be close enough:
 								// we do the calculation of contacts
-								StructureInterface interf = calcContacts(chaini, chainj, cutoff, tt);
+								StructureInterface interf = calcContacts(chaini, chainj, cutoff, csIdx, ncsIdx, trans);
 								
 								if (interf!=null) {
 									contactsFound++;
@@ -275,6 +290,7 @@ public class CrystalBuilder {
 						}
 					}
 				}
+				}
 			}
 		}
 		
@@ -290,7 +306,7 @@ public class CrystalBuilder {
 		}
 	}
 
-	private StructureInterface calcContacts(Chain chaini, Chain chainj, double cutoff, CrystalTransform tt) {
+	private StructureInterface calcContacts(Chain chaini, Chain chainj, double cutoff, int csIdx, int ncsIdx, Point3i trans) {
 		
 		// note that we don't consider hydrogens when calculating contacts
 		AtomContactSet graph = StructureTools.getAtomsInContact(chaini, chainj, cutoff, INCLUDE_HETATOMS);
@@ -298,12 +314,23 @@ public class CrystalBuilder {
 		if (graph.size()>0) {
 			if (verbose) System.out.print("x");
 			
-			CrystalTransform transf = new CrystalTransform(this.crystallographicInfo.getSpaceGroup());
+			
+			String chainIdi = chaini.getChainID();
+			String chainIdj = chainj.getChainID();
+			
+			if (numOperatorsNcs>1)
+				chainIdj = chainIdj+":"+ncsIdx;
+			
+			CrystalTransform transfi = new CrystalTransform(this.crystallographicInfo.getSpaceGroup());
+			
+			CrystalTransform transfj = new CrystalTransform(this.crystallographicInfo.getSpaceGroup(), csIdx);
+			transfj.translate(trans);
+			
 			StructureInterface interf = new StructureInterface(
 					StructureTools.getAllAtomArray(chaini), StructureTools.getAllAtomArray(chainj),
-					chaini.getChainID(), chainj.getChainID(),
+					chainIdi, chainIdj,
 					graph,
-					transf, tt);
+					transfi, transfj);
 
 			return interf;
 			
@@ -313,7 +340,7 @@ public class CrystalBuilder {
 		}		
 	}
 	
-	private void addVisited(CrystalTransform tt) {
+	private void addVisited(Matrix4d tt) {
 		visited.add(tt);
 	}
 	
@@ -324,23 +351,22 @@ public class CrystalBuilder {
 	 * @param tt
 	 * @return
 	 */
-	private boolean isRedundant(CrystalTransform tt) {
+	private boolean isRedundant(Matrix4d tt) {
 		
-		Iterator<CrystalTransform> it = visited.iterator();
+		Iterator<Matrix4d> it = visited.iterator();
 		while (it.hasNext()) {
-			CrystalTransform v = it.next();
+			Matrix4d v = it.next();
 			
-			if (tt.isEquivalent(v)) {
-
-				if (verbose) System.out.println("Skipping redundant transformation: "+tt+", equivalent to "+v);
+			if (isEquivalent(v, tt)) {
+				//if (verbose) System.out.println("Skipping redundant transformation: "+tt+", equivalent to "+v);
 				
 				// there's only 1 possible equivalent partner for each visited matrix 
 				// (since the equivalent is its inverse matrix and the inverse matrix is unique)
 				// thus once the partner has been seen, we don't need to check it ever again
 				it.remove();
-				
 				return true;
 			}
+			
 		}
 		
 		return false;
@@ -352,26 +378,96 @@ public class CrystalBuilder {
 	 * @return
 	 */
 	private Structure[] getUnitCell() {
+		
+		Matrix4d[] ncsOps = null;
+		
+		if (this.crystallographicInfo.getNcsOperators()!=null &&
+			this.crystallographicInfo.getNcsOperators().length>0) {
+					
+			ncsOps = this.crystallographicInfo.getNcsOperators();
 
-		Structure[] aus = new Structure[numOperatorsSg];
+			if (verbose) 
+				System.out.println(ncsOps.length+" NCS operators found, adding them...");
+			
+			this.numOperatorsNcs = ncsOps.length;
+		}
+
+		Structure[] aus = new Structure[numOperatorsSg*numOperatorsNcs];
 		aus[0] = structure;
 
-		if (numOperatorsSg==1) return aus;
+		operators = new Matrix4d[numOperatorsSg*numOperatorsNcs];
 		
-		int i = 1;
-		for (Matrix4d m:this.crystallographicInfo.getTransformationsOrthonormal()) {
-			
-			Structure sym = structure.clone();
-			
-			Calc.transform(sym, m); 
+		operators[0] = IDENTITY;
+		
+		// for non-crystallographic cases we can return here already
+		if (numOperatorsSg*numOperatorsNcs==1) return aus;
+		
+		Matrix4d[] csOps = this.crystallographicInfo.getTransformationsOrthonormal();				
+		
+		if (ncsOps == null) {			
+			// 1) normal case: there's no NCS operators
+			// for 0 we already set it to original AU above
+			for (int csIdx=1;csIdx<numOperatorsSg;csIdx++) {
+				operators[csIdx] = csOps[csIdx];				
+				Structure sym = structure.clone();
+				Calc.transform(sym, csOps[csIdx]);
+				aus[csIdx] = sym;
+			}
+		} else {
+			// 2) we have NCS operators, normally viral capsids
+			for (int csIdx=0; csIdx<numOperatorsSg; csIdx++) {
+				for (int ncsIdx=0; ncsIdx<numOperatorsNcs; ncsIdx++) {					
+					Matrix4d composedOp = new Matrix4d();
+					// note they are not conmutative: order matters
+					// we apply first NCS operator and then the CS operator
+					composedOp.mul(csOps[csIdx], ncsOps[ncsIdx]);					
+					if ((csIdx+ncsIdx)!=0) {
+						// for 0 (corresponding to composition of identity with identity) 
+						// we already set it to original AU above						
+						operators[csIdx+ncsIdx] = composedOp;
+						Structure sym = structure.clone();
+						Calc.transform(sym, composedOp);
+						aus[csIdx+ncsIdx] = sym;
+					}
+				}
 
-			aus[i] = sym;
-			
-			i++;
-			
+			}
 		}
-		
+
 		return aus;
 	}
 	
+	private static void crystalTranslate (Matrix4d m, Vector3d translation) {
+
+		m.m03 = m.m03+(double)translation.x;
+		m.m13 = m.m13+(double)translation.y;
+		m.m23 = m.m23+(double)translation.z;
+
+	}
+
+	/**
+	 * Returns true if the given transformation matrices are equivalent.
+	 * Two transformations are equivalent if one is the inverse of the other, i.e.
+	 * their matrices multiplication is equal to the identity.
+	 * @param m1
+	 * @param m2
+	 * @return
+	 */
+	public static boolean isEquivalent(Matrix4d m1, Matrix4d m2) {
+		Matrix4d mul = new Matrix4d();
+		mul.mul(m1, m2);
+
+		if (mul.epsilonEquals(IDENTITY, 0.0001)) {
+			return true;
+		}
+		return false;
+	}
+	
+	private String transfString(int csIdx, int ncsIdx, int a, int b, int c) {
+		if (numOperatorsNcs==1) {
+			return String.format("[%2d-(%2d,%2d,%2d)]", csIdx,a,b,c);
+		} else {
+			return String.format("[%2d:%2d-(%2d,%2d,%2d)]", csIdx,ncsIdx,a,b,c);
+		}
+	}
 }

@@ -29,18 +29,20 @@ public class UnitCellBoundingBox {
 	private BoundingBox[] auBbs;
 	
 	private int numOperatorsSg; // i.e. multiplicity of space group
+	private int numOperatorsNcs;
 	private int numChainsAu;
 	
-	public UnitCellBoundingBox(int numOperatorsSg, int numChainsAu) {
+	public UnitCellBoundingBox(int numOperatorsSg, int numOperatorsNcs, int numChainsAu) {
 		this.numOperatorsSg = numOperatorsSg;
+		this.numOperatorsNcs = numOperatorsNcs;
 		this.numChainsAu = numChainsAu;
-		this.chainBbs = new BoundingBox[numOperatorsSg][numChainsAu];
-		this.auBbs = new BoundingBox[numOperatorsSg];
+		this.chainBbs = new BoundingBox[numOperatorsSg*numOperatorsNcs][numChainsAu];
+		this.auBbs = new BoundingBox[numOperatorsSg*numOperatorsNcs];
 	}
 	
 	public void setAllBbs(Structure[] cell, boolean includeHetAtoms) {
 		setOriginalAuBbs(cell[0], includeHetAtoms);
-		if (cell.length==1) return;
+		if ((numOperatorsSg+numOperatorsNcs)==1) return;
 		setAllNonAuBbs(cell, includeHetAtoms);
 	}
 	
@@ -71,12 +73,17 @@ public class UnitCellBoundingBox {
 	 */
 	public void setAllNonAuBbs(Structure[] cell, boolean includeHetAtoms) {
 		
-		// the original AU (i=0) was already set by setOriginalAuBbs
-		for (int i=1; i<numOperatorsSg; i++) {
-			for (int j = 0;j<numChainsAu; j++) {
-				chainBbs[i][j] = new BoundingBox(StructureTools.getAllNonHAtomArray(cell[i].getChain(j), includeHetAtoms));
+		for (int csIdx=0; csIdx<numOperatorsSg; csIdx++) {
+			for (int ncsIdx=0;ncsIdx<numOperatorsNcs;ncsIdx++) {
+				int i = csIdx+ncsIdx;
+				// the original AU (i=0) was already set by setOriginalAuBbs		
+				if (i==0) continue;
+				for (int j = 0;j<numChainsAu; j++) {
+					chainBbs[i][j] = 
+							new BoundingBox(StructureTools.getAllNonHAtomArray(cell[i].getChain(j), includeHetAtoms));
+				}
+				auBbs[i] = new BoundingBox(chainBbs[i]);
 			}
-			auBbs[i] = new BoundingBox(chainBbs[i]);
 		}	
 	}
 		
@@ -108,14 +115,17 @@ public class UnitCellBoundingBox {
 	 * @return
 	 */
 	public UnitCellBoundingBox getTranslatedBbs(Vector3d translation) {
-		UnitCellBoundingBox translatedBbs = new UnitCellBoundingBox(numOperatorsSg, numChainsAu);
+		UnitCellBoundingBox translatedBbs = new UnitCellBoundingBox(numOperatorsSg, numOperatorsNcs, numChainsAu);
 		
-		for (int i=0; i<numOperatorsSg; i++) {
-			for (int j = 0;j<numChainsAu; j++) {
-				translatedBbs.chainBbs[i][j] = new BoundingBox(this.chainBbs[i][j]);
-				translatedBbs.chainBbs[i][j].translate(translation);
+		for (int csIdx=0; csIdx<numOperatorsSg; csIdx++) {
+			for (int ncsIdx=0;ncsIdx<numOperatorsNcs;ncsIdx++){
+				int i = csIdx+ncsIdx;
+				for (int j = 0;j<numChainsAu; j++) {
+					translatedBbs.chainBbs[i][j] = new BoundingBox(this.chainBbs[i][j]);
+					translatedBbs.chainBbs[i][j].translate(translation);
+				}
+				translatedBbs.auBbs[i] = new BoundingBox(translatedBbs.chainBbs[i]);
 			}
-			translatedBbs.auBbs[i] = new BoundingBox(translatedBbs.chainBbs[i]);
 		}
 		
 		return translatedBbs;
