@@ -906,6 +906,7 @@ public class SimpleMMcifConsumer implements MMcifConsumer {
 		structure.getPDBHeader().setBioUnitTranformationMap(transformationMap);
 
 		ArrayList<Matrix4d> ncsOperators = new ArrayList<Matrix4d>();
+		ncsOperators.add(new Matrix4d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1));
 		for (StructNcsOper sNcsOper:structNcsOper) {
 			if (sNcsOper.getCode().equals("generate")) {
 				ncsOperators.add(sNcsOper.getOperator());

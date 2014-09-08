@@ -1618,6 +1618,7 @@ COLUMNS   DATA TYPE         FIELD          DEFINITION
 			if (ncsOperators==null) {
 				// we initialise on first pass
 				ncsOperators = new ArrayList<Matrix4d>();
+				ncsOperators.add(new Matrix4d(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1));
 			}
 
 			if (currentNcsOp==null) {

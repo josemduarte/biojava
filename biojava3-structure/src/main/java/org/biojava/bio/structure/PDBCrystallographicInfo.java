@@ -142,7 +142,7 @@ public class PDBCrystallographicInfo implements Serializable {
 	}
 	
 	/**
-	 * Get the NCS operators.
+	 * Get the NCS operators, index 0 contains the identity.
 	 * Some PDB files contain NCS operators necessary to create the full AU.
 	 * Usually this happens for viral proteins.
 	 * See http://www.wwpdb.org/documentation/format33/sect8.html#MTRIXn .
@@ -156,7 +156,7 @@ public class PDBCrystallographicInfo implements Serializable {
 	}
 
 	/**
-	 * Set the NCS operators.
+	 * Set the NCS operators, index 0 must contain the identity.
 	 * Some PDB files contain NCS operators necessary to create the full AU.
 	 * Usually this happens for viral proteins.
 	 * See http://www.wwpdb.org/documentation/format33/sect8.html#MTRIXn .

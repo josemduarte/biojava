@@ -17,7 +17,7 @@ import org.biojava.bio.structure.contact.BoundingBox;
 public class UnitCellBoundingBox {
 
 	/**
-	 * An array with dimensions numOperatorsSg x numChainsAu to contain all 
+	 * An array with dimensions numOperatorsSg x numChainsSuperAu to contain all 
 	 * bounding boxes of all chains of all AUs in unit cell
 	 * e.g. chainBbs[0] would be the bounding boxes for all chains in the original AU
 	 */
@@ -30,32 +30,59 @@ public class UnitCellBoundingBox {
 	private BoundingBox[] auBbs;
 	
 	private int numOperatorsSg; // i.e. multiplicity of space group
+	private int numOperatorsNcs;
 	private int numChainsAu;
+	private int numChainsSuperAu;
 	
-	public UnitCellBoundingBox(int numOperatorsSg, int numChainsAu) {
-		this.numOperatorsSg = numOperatorsSg;
+	public UnitCellBoundingBox(Structure structure, Matrix4d[] ops, Matrix4d[] ncsOps, boolean includeHetAtoms) {
+		this.numOperatorsSg = ops.length;
+		this.numChainsAu = structure.getChains().size();
+		this.numOperatorsNcs = ncsOps.length;
+		this.numChainsSuperAu = numOperatorsNcs * numChainsAu;
+		
+		initArrays();
+		
+		setBbs(structure, ops, ncsOps, includeHetAtoms);
+	}
+	
+	private UnitCellBoundingBox(int numOperatorsSg, int numOperatorsNcs, int numChainsAu) {
 		this.numChainsAu = numChainsAu;
-		this.chainBbs = new BoundingBox[numOperatorsSg][numChainsAu];
+		this.numOperatorsNcs = numOperatorsNcs;
+		this.numOperatorsSg = numOperatorsSg;
+		this.numChainsSuperAu = numOperatorsNcs * numChainsAu;
+		initArrays();
+	}
+	
+	private void initArrays() {
+		this.chainBbs = new BoundingBox[numOperatorsSg][numChainsSuperAu];
+		for (int cellIdx=0;cellIdx<numOperatorsSg;cellIdx++) {
+			this.chainBbs[cellIdx] = new BoundingBox[numChainsSuperAu];
+		}
 		this.auBbs = new BoundingBox[numOperatorsSg];
 	}
 	
-	public void setBbs(Structure structure, Matrix4d[] ops, boolean includeHetAtoms) {
+	private void setBbs(Structure structure, Matrix4d[] ops, Matrix4d[] ncsOps, boolean includeHetAtoms) {
 
-		setBb(structure, includeHetAtoms, 0);
-		for (int i=1;i<ops.length;i++) {			
-			Structure sym = structure.clone();			
-			Calc.transform(sym, ops[i]); 
-			setBb(sym, includeHetAtoms, i);
+		//setBb(structure, includeHetAtoms, 0);
+		
+		for (int csOpIdx=0;csOpIdx<numOperatorsSg;csOpIdx++) {
+			for (int ncsOpIdx=0;ncsOpIdx<numOperatorsNcs;ncsOpIdx++) {
+				Structure mate = structure.clone();	
+				Matrix4d composed = new Matrix4d();
+				composed.mul(ops[csOpIdx], ncsOps[ncsOpIdx]);
+				Calc.transform(mate, ops[csOpIdx]); 
+				
+				for (int j = 0;j<numChainsAu; j++) {
+					chainBbs[csOpIdx][ncsOpIdx*numChainsAu+j] = 
+							new BoundingBox(StructureTools.getAllNonHAtomArray(mate.getChain(j), includeHetAtoms));
+				}
+			}
+		}
+		
+		for (int csOpIdx=0;csOpIdx<numOperatorsSg;csOpIdx++) {	
+			auBbs[csOpIdx] = new BoundingBox(chainBbs[csOpIdx]);
 		}
 
-	}
-	
-	private void setBb(Structure s, boolean includeHetAtoms, int i) {
-		chainBbs[i] = new BoundingBox[numChainsAu];
-		for (int j = 0;j<numChainsAu; j++) {
-			chainBbs[i][j] = new BoundingBox(StructureTools.getAllNonHAtomArray(s.getChain(j), includeHetAtoms));
-		}
-		auBbs[i] = new BoundingBox(chainBbs[i]);		
 	}
 		
 	/**
@@ -86,10 +113,10 @@ public class UnitCellBoundingBox {
 	 * @return
 	 */
 	public UnitCellBoundingBox getTranslatedBbs(Vector3d translation) {
-		UnitCellBoundingBox translatedBbs = new UnitCellBoundingBox(numOperatorsSg, numChainsAu);
+		UnitCellBoundingBox translatedBbs = new UnitCellBoundingBox(numOperatorsSg, numOperatorsNcs, numChainsAu);
 		
 		for (int i=0; i<numOperatorsSg; i++) {
-			for (int j = 0;j<numChainsAu; j++) {
+			for (int j = 0;j<numChainsSuperAu; j++) {
 				translatedBbs.chainBbs[i][j] = new BoundingBox(this.chainBbs[i][j]);
 				translatedBbs.chainBbs[i][j].translate(translation);
 			}
