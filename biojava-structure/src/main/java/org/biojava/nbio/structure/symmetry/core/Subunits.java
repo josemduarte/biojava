@@ -320,4 +320,9 @@ public class Subunits {
     		}
     	}
     }
+    
+    @Override
+    public String toString() {
+    	return chainIds.toString();
+    }
 }
