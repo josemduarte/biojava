@@ -34,6 +34,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.vecmath.Matrix4d;
+
 import org.biojava.nbio.structure.align.util.AtomCache;
 import org.biojava.nbio.structure.contact.AtomContactSet;
 import org.biojava.nbio.structure.contact.Grid;
@@ -1798,5 +1801,58 @@ public class StructureTools {
 
 		}
 		return true;
+	}
+
+	/**
+	 * Cleans up the structure's alternate location groups. All alternate location groups should have all atoms (except in the case of microheterogenity.
+	 * Ensure that all the alt loc groups have all the atoms in the main group
+	 * @param structure The Structure to be cleaned up
+	 */
+	public static void cleanUpAltLocs(Structure structure) {
+		for (int i =0; i< structure.nrModels() ; i++){
+			for (Chain chain : structure.getModel(i)) {
+				for (Group group : chain.getAtomGroups()) {
+					for (Group altLocGroup : group.getAltLocs()) { 
+						for ( Atom groupAtom : group.getAtoms()) {
+							// If this alt loc doesn't have this atom
+							if (! altLocGroup.hasAtom(groupAtom.getName())) {
+								if (altLocGroup.getPDBName().equals(group.getPDBName())) {
+									altLocGroup.addAtom(groupAtom);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Expands the NCS operators in the given Structure adding new chains as needed.
+	 * @param structure
+	 */
+	public static void expandNcsOps(Structure structure) {
+		PDBCrystallographicInfo xtalInfo = structure.getCrystallographicInfo();
+		if (xtalInfo ==null) return;
+		
+		if (xtalInfo.getNcsOperators()==null || xtalInfo.getNcsOperators().length==0) return;
+		
+		List<Chain> chainsToAdd = new ArrayList<>();
+		int i = 0;
+		for (Matrix4d m:xtalInfo.getNcsOperators()) {
+			i++;
+			
+			for (Chain c:structure.getChains()) {
+				Chain clonedChain = (Chain)c.clone();
+				clonedChain.setChainID(c.getChainID()+i);
+				Calc.transform(clonedChain, m);
+				chainsToAdd.add(clonedChain);
+				c.getCompound().addChain(clonedChain);
+			}
+		}
+		
+		for (Chain c:chainsToAdd) {
+			structure.addChain(c);
+		}
 	}
 }
