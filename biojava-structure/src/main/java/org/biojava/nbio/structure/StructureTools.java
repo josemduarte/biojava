@@ -1829,6 +1829,7 @@ public class StructureTools {
 	
 	/**
 	 * Expands the NCS operators in the given Structure adding new chains as needed.
+	 * The new chains are assigned ids of the form: original_chain_id+ncs_operator_index+"n"
 	 * @param structure
 	 */
 	public static void expandNcsOps(Structure structure) {
@@ -1844,7 +1845,10 @@ public class StructureTools {
 			
 			for (Chain c:structure.getChains()) {
 				Chain clonedChain = (Chain)c.clone();
-				clonedChain.setChainID(c.getChainID()+i);
+				String newChainId = c.getChainID()+i+"n";
+				clonedChain.setChainID(newChainId);
+				clonedChain.setInternalChainID(newChainId);
+				setChainIdsInResidueNumbers(clonedChain, newChainId);
 				Calc.transform(clonedChain, m);
 				chainsToAdd.add(clonedChain);
 				c.getCompound().addChain(clonedChain);
@@ -1853,6 +1857,23 @@ public class StructureTools {
 		
 		for (Chain c:chainsToAdd) {
 			structure.addChain(c);
+		}
+	}
+	
+	/**
+	 * Auxiliary method to reset chain ids of residue numbers in a chain.
+	 * Used when cloning chains and resetting their ids: one needs to take care of 
+	 * resetting the ids within residue numbers too.
+	 * @param c
+	 * @param newChainId
+	 */
+	private static void setChainIdsInResidueNumbers(Chain c, String newChainId) {
+		for (Group g:c.getAtomGroups()) {
+			g.setResidueNumber(newChainId, g.getResidueNumber().getSeqNum(), g.getResidueNumber().getInsCode());
+		}
+		for (Group g:c.getSeqResGroups()) {
+			if (g.getResidueNumber()==null) continue;
+			g.setResidueNumber(newChainId, g.getResidueNumber().getSeqNum(), g.getResidueNumber().getInsCode());
 		}
 	}
 }
