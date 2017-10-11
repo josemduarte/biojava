@@ -18,6 +18,14 @@ public enum SubunitClustererMethod {
 	IDENTITY,
 
 	/**
+	 * The IDENTITY95 clustering method uses the residue sequence of the
+	 * {@link Subunit} to calculate sequence alignments. Two {@link Subunit} 
+	 * with more than 95% identical sequences covering 100% of their lengths will be 
+	 * clustered together.
+	 */
+	IDENTITY95,
+
+	/**
 	 * The SEQUENCE clustering method uses the residue sequence of the
 	 * {@link Subunit} to calculate sequence alignments.
 	 * <p>
