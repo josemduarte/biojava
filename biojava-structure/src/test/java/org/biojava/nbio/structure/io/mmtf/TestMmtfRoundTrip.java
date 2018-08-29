@@ -73,7 +73,7 @@ public class TestMmtfRoundTrip {
 		ChemCompGroupFactory.setChemCompProvider(new DownloadChemCompProvider());
 		
 		// test case for biojava issue #770, order of subunits
-	    Structure structure1 = StructureIO.getStructure("3BW1");
+	    Structure structure1 = StructureIO.getStructure("2X3T");
 		AdapterToStructureData writerToEncoder = new AdapterToStructureData();
 		new MmtfStructureWriter(structure1, writerToEncoder);
 		MmtfStructureReader mmtfStructureReader = new MmtfStructureReader();
@@ -89,7 +89,6 @@ public class TestMmtfRoundTrip {
 	 * Broad test of atom similarity
 	 * @param structOne the first input structure
 	 * @param structTwo the second input structure
-	 * @param mmtfParams
 	 * @return
 	 */
 	private boolean checkIfAtomsSame(Structure structOne, Structure structTwo) {
