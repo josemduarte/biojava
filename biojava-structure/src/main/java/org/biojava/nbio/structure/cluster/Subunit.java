@@ -91,6 +91,10 @@ public class Subunit {
 		return reprAtoms;
 	}
 
+	public void setRepresentativeAtoms(Atom[] atoms) {
+		this.reprAtoms = atoms;
+	}
+
 	/**
 	 * The size of a Subunit is the number of residues it contains.
 	 *

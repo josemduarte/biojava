@@ -36,6 +36,7 @@ import org.biojava.nbio.structure.ResidueNumber;
 import org.biojava.nbio.structure.Structure;
 import org.biojava.nbio.structure.asa.AsaCalculator;
 import org.biojava.nbio.structure.asa.GroupAsa;
+import org.biojava.nbio.structure.cluster.Subunit;
 import org.biojava.nbio.structure.io.FileConvert;
 import org.biojava.nbio.structure.io.FileParsingParameters;
 import org.biojava.nbio.structure.io.mmcif.MMCIFFileTools;
@@ -70,13 +71,7 @@ public class StructureInterface implements Serializable, Comparable<StructureInt
 	private AtomContactSet contacts;
 	private GroupContactSet groupContacts;
 
-	private Pair<Atom[]> molecules;
-
-	/**
-	 * The identifier for each of the atom arrays (usually a chain identifier, i.e. a single capital letter)
-	 * Serves to identify the molecules within the Asymmetric Unit of the crystal
-	 */
-	private Pair<String> moleculeIds;
+	private Pair<Subunit> subunits;
 
 	/**
 	 * The transformations (crystal operators) applied to each molecule (if applicable)
@@ -104,8 +99,20 @@ public class StructureInterface implements Serializable, Comparable<StructureInt
 			AtomContactSet contacts,
 			CrystalTransform firstTransf, CrystalTransform secondTransf) {
 
-		this.molecules = new Pair<>(firstMolecule, secondMolecule);
-		this.moleculeIds = new Pair<>(firstMoleculeId,secondMoleculeId);
+		this.subunits = new Pair<>(
+				new Subunit(firstMolecule, firstMoleculeId, null, getStructureFromAtomArray(firstMolecule)),
+				new Subunit(secondMolecule, secondMoleculeId, null, getStructureFromAtomArray(secondMolecule)));
+
+		this.contacts = contacts;
+		this.transforms = new Pair<>(firstTransf, secondTransf);
+	}
+
+	public StructureInterface(
+			Subunit firstSubunit, Subunit secondSubunit,
+			AtomContactSet contacts,
+			CrystalTransform firstTransf, CrystalTransform secondTransf) {
+
+		this.subunits = new Pair<>(firstSubunit, secondSubunit);
 		this.contacts = contacts;
 		this.transforms = new Pair<>(firstTransf, secondTransf);
 	}
@@ -134,8 +141,8 @@ public class StructureInterface implements Serializable, Comparable<StructureInt
 	 */
 	public Pair<String> getCrystalIds() {
 		return new Pair<>(
-			moleculeIds.getFirst()+transforms.getFirst().getTransformId()+transforms.getFirst().getCrystalTranslation(),
-			moleculeIds.getSecond()+transforms.getSecond().getTransformId()+transforms.getSecond().getCrystalTranslation());
+			subunits.getFirst().getName()+transforms.getFirst().getTransformId()+transforms.getFirst().getCrystalTranslation(),
+			subunits.getSecond().getName()+transforms.getSecond().getTransformId()+transforms.getSecond().getCrystalTranslation());
 	}
 
 	/**
@@ -164,11 +171,19 @@ public class StructureInterface implements Serializable, Comparable<StructureInt
 	}
 
 	public Pair<Atom[]> getMolecules() {
-		return molecules;
+		return new Pair<>(subunits.getFirst().getRepresentativeAtoms(),subunits.getSecond().getRepresentativeAtoms());
 	}
 
 	public void setMolecules(Pair<Atom[]> molecules) {
-		this.molecules = molecules;
+		if (subunits == null) {
+			subunits = new Pair<>(
+					new Subunit(molecules.getFirst(), null, null, null),
+					new Subunit(molecules.getSecond(), null, null, null)
+					);
+		} else {
+			this.subunits.getFirst().setRepresentativeAtoms(molecules.getFirst());
+			this.subunits.getSecond().setRepresentativeAtoms(molecules.getSecond());
+		}
 	}
 
 	/**
@@ -177,11 +192,15 @@ public class StructureInterface implements Serializable, Comparable<StructureInt
 	 * @return
 	 */
 	public Pair<String> getMoleculeIds() {
-		return moleculeIds;
+		return new Pair<>(subunits.getFirst().getName(), subunits.getSecond().getName());
 	}
 
 	public void setMoleculeIds(Pair<String> moleculeIds) {
-		this.moleculeIds = moleculeIds;
+		if (subunits == null) {
+			throw new IllegalStateException("Can't set molecule ids if subunits are not set");
+		}
+		this.subunits.getFirst().setName(moleculeIds.getFirst());
+		this.subunits.getSecond().setName(moleculeIds.getSecond());
 	}
 
 	/**
@@ -272,12 +291,12 @@ public class StructureInterface implements Serializable, Comparable<StructureInt
 
 	protected Atom[] getFirstAtomsForAsa(int cofactorSizeToUse) {
 
-		return getAllNonHAtomArray(molecules.getFirst(), cofactorSizeToUse);
+		return getAllNonHAtomArray(subunits.getFirst().getRepresentativeAtoms(), cofactorSizeToUse);
 	}
 
 	protected Atom[] getSecondAtomsForAsa(int cofactorSizeToUse) {
 
-		return getAllNonHAtomArray(molecules.getSecond(), cofactorSizeToUse);
+		return getAllNonHAtomArray(subunits.getSecond().getRepresentativeAtoms(), cofactorSizeToUse);
 	}
 
 	protected Atom[] getAtomsForAsa(int cofactorSizeToUse) {
@@ -369,7 +388,7 @@ public class StructureInterface implements Serializable, Comparable<StructureInt
 	 * @return
 	 */
 	public boolean isSymRelated() {
-		return moleculeIds.getFirst().equals(moleculeIds.getSecond());
+		return subunits.getFirst().getName().equals(subunits.getSecond().getName());
 	}
 
 	/**
@@ -684,8 +703,8 @@ public class StructureInterface implements Serializable, Comparable<StructureInt
 	 * @return
 	 */
 	public Pair<Chain> getParentChains() {
-		Atom[] firstMol = this.molecules.getFirst();
-		Atom[] secondMol = this.molecules.getSecond();
+		Atom[] firstMol = this.subunits.getFirst().getRepresentativeAtoms();
+		Atom[] secondMol = this.subunits.getSecond().getRepresentativeAtoms();
 		if (firstMol.length==0 || secondMol.length==0) {
 			logger.warn("No atoms found in first or second molecule, can't get parent Chains");
 			return null;
@@ -704,11 +723,11 @@ public class StructureInterface implements Serializable, Comparable<StructureInt
 			logger.warn("Could not find parents chains, compounds will be null");
 			return null;
 		}
-		return new Pair<EntityInfo>(chains.getFirst().getEntityInfo(), chains.getSecond().getEntityInfo());
+		return new Pair<>(chains.getFirst().getEntityInfo(), chains.getSecond().getEntityInfo());
 	}
 
 	private Structure getParentStructure() {
-		Atom[] firstMol = this.molecules.getFirst();
+		Atom[] firstMol = this.subunits.getFirst().getRepresentativeAtoms();
 		if (firstMol.length==0) {
 			logger.warn("No atoms found in first molecule, can't get parent Structure");
 			return null;
@@ -739,12 +758,12 @@ public class StructureInterface implements Serializable, Comparable<StructureInt
 		}
 
 		StringBuilder sb = new StringBuilder();
-		for (Atom atom:this.molecules.getFirst()) {
+		for (Atom atom:this.subunits.getFirst().getRepresentativeAtoms()) {
 			sb.append(FileConvert.toPDB(atom, molecId1));
 		}
 		sb.append("TER");
 		sb.append(System.getProperty("line.separator"));
-		for (Atom atom:this.molecules.getSecond()) {
+		for (Atom atom:this.subunits.getSecond().getRepresentativeAtoms()) {
 			sb.append(FileConvert.toPDB(atom,molecId2));
 		}
 		sb.append("TER");
@@ -779,7 +798,7 @@ public class StructureInterface implements Serializable, Comparable<StructureInt
 		// we reassign atom ids if sym related (otherwise atom ids would be duplicated and some molecular viewers can't cope with that)
 		int atomId = 1;
 		List<AtomSite> atomSites = new ArrayList<>();
-		for (Atom atom:this.molecules.getFirst()) {
+		for (Atom atom:this.subunits.getFirst().getRepresentativeAtoms()) {
 			if (isSymRelated()) {
 				atomSites.add(MMCIFFileTools.convertAtomToAtomSite(atom, 1, molecId1, molecId1, atomId));
 			} else {
@@ -787,7 +806,7 @@ public class StructureInterface implements Serializable, Comparable<StructureInt
 			}
 			atomId++;
 		}
-		for (Atom atom:this.molecules.getSecond()) {
+		for (Atom atom:this.subunits.getSecond().getRepresentativeAtoms()) {
 			if (isSymRelated()) {
 				atomSites.add(MMCIFFileTools.convertAtomToAtomSite(atom, 1, molecId2, molecId2, atomId));
 			} else {
@@ -809,7 +828,22 @@ public class StructureInterface implements Serializable, Comparable<StructureInt
 
 	@Override
 	public String toString() {
+		Pair<String> moleculeIds = new Pair<>(subunits.getFirst().getName(), subunits.getSecond().getName());
 		return String.format("StructureInterface %d (%s, %.0f A, <%s; %s>)", id, moleculeIds,totalArea,transforms.getFirst().toXYZString(),transforms.getSecond().toXYZString());
+	}
+
+	/**
+	 * Get parent structure from first atom in given array or null if the reference is not present
+	 * @param atoms the atom array, if empty null is returned
+	 * @return the Structure or null if no reference is found
+	 */
+	private static Structure getStructureFromAtomArray(Atom[] atoms) {
+		if (atoms.length == 0) return null;
+		Group g = atoms[0].getGroup();
+		if (g == null) return null;
+		Chain c = g.getChain();
+		if (c == null) return null;
+		return c.getStructure();
 	}
 
 }

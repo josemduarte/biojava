@@ -5,6 +5,7 @@ import org.biojava.nbio.structure.Calc;
 import org.biojava.nbio.structure.Chain;
 import org.biojava.nbio.structure.Structure;
 import org.biojava.nbio.structure.StructureTools;
+import org.biojava.nbio.structure.cluster.Subunit;
 import org.biojava.nbio.structure.xtal.CrystalTransform;
 import org.biojava.nbio.structure.xtal.SpaceGroup;
 
@@ -79,14 +80,18 @@ public class InterfaceFinder {
     }
 
     private StructureInterface calcInterface(Chain chain1, Chain chain2) {
-        AtomContactSet graph = StructureTools.getAtomsInContact(chain1, chain2, cutoff, INCLUDE_HETATOMS);
+        AtomContactSet contactSet = StructureTools.getAtomsInContact(chain1, chain2, cutoff, INCLUDE_HETATOMS);
+
+        Atom[] atoms1 = StructureTools.getAllNonHAtomArray(chain1, INCLUDE_HETATOMS);
+        Subunit subunit1 = new Subunit(atoms1, chain1.getName(), null, chain1.getStructure());
+        Atom[] atoms2 = StructureTools.getAllNonHAtomArray(chain2, INCLUDE_HETATOMS);
+        Subunit subunit2 = new Subunit(atoms2, chain2.getName(), null, chain2.getStructure());
 
         StructureInterface interf = null;
-        if (graph.size()>0) {
+        if (contactSet.size()>0) {
             interf = new StructureInterface(
-                    StructureTools.getAllNonHAtomArray(chain1, INCLUDE_HETATOMS), StructureTools.getAllNonHAtomArray(chain2, INCLUDE_HETATOMS),
-                    chain1.getName(), chain2.getName(),
-                    graph,
+                    subunit1, subunit2,
+                    contactSet,
                     IDENTITY_TRANSFORM, IDENTITY_TRANSFORM);
         }
 
