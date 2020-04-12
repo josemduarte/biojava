@@ -129,6 +129,8 @@ public class SubunitCluster {
 		subunitEQR.add(identity);
 
 		representative = 0;
+
+		subunit.setParentCluster(this);
 	}
 
 	/**

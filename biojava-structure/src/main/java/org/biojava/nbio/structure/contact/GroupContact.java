@@ -41,7 +41,12 @@ public class GroupContact implements Serializable {
 	private List<AtomContact> atomContacts;
 
 	public GroupContact() {
-		atomContacts = new ArrayList<AtomContact>();
+		atomContacts = new ArrayList<>();
+	}
+
+	public GroupContact(Pair<Group> residuePair) {
+		atomContacts = new ArrayList<>();
+		this.pair = residuePair;
 	}
 
 	public void addAtomContact(AtomContact atomContact) {

@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Function;
 
 import org.biojava.nbio.structure.Atom;
 import org.biojava.nbio.structure.Chain;
@@ -37,6 +38,8 @@ import org.biojava.nbio.structure.Structure;
 import org.biojava.nbio.structure.asa.AsaCalculator;
 import org.biojava.nbio.structure.asa.GroupAsa;
 import org.biojava.nbio.structure.cluster.Subunit;
+import org.biojava.nbio.structure.cluster.SubunitCluster;
+import org.biojava.nbio.structure.cluster.SubunitClustererParameters;
 import org.biojava.nbio.structure.io.FileConvert;
 import org.biojava.nbio.structure.io.FileParsingParameters;
 import org.biojava.nbio.structure.io.mmcif.MMCIFFileTools;
@@ -111,6 +114,8 @@ public class StructureInterface implements Serializable, Comparable<StructureInt
 			Subunit firstSubunit, Subunit secondSubunit,
 			AtomContactSet contacts,
 			CrystalTransform firstTransf, CrystalTransform secondTransf) {
+
+		// TODO problem!!! subunits has 1 atom per group, but the ASA calculations below and related methods need all non-H atoms
 
 		this.subunits = new Pair<>(firstSubunit, secondSubunit);
 		this.contacts = contacts;
@@ -614,7 +619,7 @@ public class StructureInterface implements Serializable, Comparable<StructureInt
 	 * if true the match will be first-to-second and second-to-first
 	 * @return the contact overlap score, range [0.0,1.0]
 	 */
-	public double getContactOverlapScore(StructureInterface other, boolean invert) {
+	private double getContactOverlapScoreByEntity(StructureInterface other, boolean invert) {
 
 		Structure thisStruct = getParentStructure();
 		Structure otherStruct = other.getParentStructure();
@@ -638,49 +643,85 @@ public class StructureInterface implements Serializable, Comparable<StructureInt
 			return 0;
 		}
 
-		Pair<EntityInfo> thisCompounds = new Pair<EntityInfo>(thisChains.getFirst().getEntityInfo(), thisChains.getSecond().getEntityInfo());
-		Pair<EntityInfo> otherCompounds = new Pair<EntityInfo>(otherChains.getFirst().getEntityInfo(), otherChains.getSecond().getEntityInfo());
+		Pair<EntityInfo> thisEntities = new Pair<>(thisChains.getFirst().getEntityInfo(), thisChains.getSecond().getEntityInfo());
+		Pair<EntityInfo> otherEntities = new Pair<>(otherChains.getFirst().getEntityInfo(), otherChains.getSecond().getEntityInfo());
 
-		if ( (  (thisCompounds.getFirst() == otherCompounds.getFirst()) &&
-				(thisCompounds.getSecond() == otherCompounds.getSecond())   )  ||
-			 (  (thisCompounds.getFirst() == otherCompounds.getSecond()) &&
-				(thisCompounds.getSecond() == otherCompounds.getFirst())   )	) {
+		if ( (  (thisEntities.getFirst() == otherEntities.getFirst()) &&
+				(thisEntities.getSecond() == otherEntities.getSecond())   )  ||
+			 (  (thisEntities.getFirst() == otherEntities.getSecond()) &&
+				(thisEntities.getSecond() == otherEntities.getFirst())   )	) {
 
-			int common = 0;
-			GroupContactSet thisContacts = getGroupContacts();
-			GroupContactSet otherContacts = other.getGroupContacts();
+			return calcScore(other, invert, GroupContactSet.getDefaultIndexFunction());
 
-			for (GroupContact thisContact:thisContacts) {
-
-				ResidueIdentifier first = null;
-				ResidueIdentifier second = null;
-
-				if (!invert) {
-					first = new ResidueIdentifier(thisContact.getPair().getFirst());
-
-					second = new ResidueIdentifier(thisContact.getPair().getSecond());
-				} else {
-					first = new ResidueIdentifier(thisContact.getPair().getSecond());
-
-					second = new ResidueIdentifier(thisContact.getPair().getFirst());
-				}
-
-				if (otherContacts.hasContact(first,second)) {
-					common++;
-				}
-			}
-			return (2.0*common)/(thisContacts.size()+otherContacts.size());
 		} else {
-			logger.debug("Chain pairs {},{} and {},{} belong to different compound pairs, contact overlap score will be 0 ",
+			logger.debug("Chain pairs {},{} and {},{} belong to different entity pairs, contact overlap score will be 0 ",
 					thisChains.getFirst().getId(),thisChains.getSecond().getId(),
 					otherChains.getFirst().getId(),otherChains.getSecond().getId());
 			return 0.0;
 		}
 	}
 
-	public GroupContactSet getGroupContacts() {
+	/**
+	 * Calculates the contact overlap score between this StructureInterface and
+	 * the given one.
+	 * Before calling this, {@link org.biojava.nbio.structure.cluster.SubunitClusterer#cluster(Structure, SubunitClustererParameters)} must be called
+	 * to set subunit clusters and equivalent residues within clusters (alignments)
+	 * @param other the interface to be compared to this one
+	 * @param invert if false the comparison will be done first-to-first and second-to-second,
+	 * if true the match will be first-to-second and second-to-first
+	 * @return the contact overlap score, range [0.0,1.0] (0 = no overlap at all, 1 = identical contact sets at interface)
+	 */
+	public double getContactOverlapScore(StructureInterface other, boolean invert) {
+
+		Subunit thisFirstSubunit = subunits.getFirst();
+		Subunit thisSecondSubunit = subunits.getSecond();
+		Subunit otherFirstSubunit = other.subunits.getFirst();
+		Subunit otherSecondSubunit = other.subunits.getSecond();
+
+		if (thisFirstSubunit.getParentCluster() == null || thisSecondSubunit.getParentCluster() == null ||
+				otherFirstSubunit.getParentCluster() == null || otherSecondSubunit.getParentCluster() == null) {
+			logger.info("Subunit clusters have not been calculated. Failing back to contact overlap score calculation by SEQRES entity index lookup");
+			return getContactOverlapScoreByEntity(other, invert);
+		}
+
+		if ( (thisFirstSubunit.getParentCluster() == otherFirstSubunit.getParentCluster() &&
+				thisSecondSubunit.getParentCluster() == otherSecondSubunit.getParentCluster()) ||
+				(thisSecondSubunit.getParentCluster() == otherFirstSubunit.getParentCluster() &&
+						thisFirstSubunit.getParentCluster() == otherSecondSubunit.getParentCluster()) )
+		{
+
+			return calcScore(other, invert, indexFunction);
+
+		} else {
+			logger.debug("Subunit pairs {},{} and {},{} belong to different cluster pairs, contact overlap score will be 0 ",
+					thisFirstSubunit.getName(), thisSecondSubunit.getName(),
+					otherFirstSubunit.getName(), otherSecondSubunit.getName());
+			return 0.0;
+		}
+
+	}
+
+	private double calcScore(StructureInterface other, boolean invert, Function<Group, Integer> indexFunction) {
+		int common = 0;
+
+		GroupContactSet thisContacts = getGroupContacts(indexFunction);
+		GroupContactSet otherContacts = other.getGroupContacts(indexFunction);
+
+		for (GroupContact thisContact:thisContacts) {
+
+			Group group1 = invert? thisContact.getPair().getSecond() : thisContact.getPair().getFirst();
+			Group group2 = invert? thisContact.getPair().getFirst() : thisContact.getPair().getSecond();
+
+			if (otherContacts.hasContact(group1, group2)) {
+				common++;
+			}
+		}
+		return (2.0*common)/(thisContacts.size()+otherContacts.size());
+	}
+
+	private GroupContactSet getGroupContacts(Function<Group, Integer> indexFunction) {
 		if (groupContacts==null) {
-			this.groupContacts  = new GroupContactSet(contacts);
+			this.groupContacts  = new GroupContactSet(contacts, indexFunction);
 		}
 		return this.groupContacts;
 	}
@@ -733,6 +774,20 @@ public class StructureInterface implements Serializable, Comparable<StructureInt
 			return null;
 		}
 		return firstMol[0].getGroup().getChain().getStructure();
+	}
+
+	/**
+	 * Get parent structure from first atom in given array or null if the reference is not present
+	 * @param atoms the atom array, if empty null is returned
+	 * @return the Structure or null if no reference is found
+	 */
+	private static Structure getStructureFromAtomArray(Atom[] atoms) {
+		if (atoms.length == 0) return null;
+		Group g = atoms[0].getGroup();
+		if (g == null) return null;
+		Chain c = g.getChain();
+		if (c == null) return null;
+		return c.getStructure();
 	}
 
 	/**
@@ -830,20 +885,6 @@ public class StructureInterface implements Serializable, Comparable<StructureInt
 	public String toString() {
 		Pair<String> moleculeIds = new Pair<>(subunits.getFirst().getName(), subunits.getSecond().getName());
 		return String.format("StructureInterface %d (%s, %.0f A, <%s; %s>)", id, moleculeIds,totalArea,transforms.getFirst().toXYZString(),transforms.getSecond().toXYZString());
-	}
-
-	/**
-	 * Get parent structure from first atom in given array or null if the reference is not present
-	 * @param atoms the atom array, if empty null is returned
-	 * @return the Structure or null if no reference is found
-	 */
-	private static Structure getStructureFromAtomArray(Atom[] atoms) {
-		if (atoms.length == 0) return null;
-		Group g = atoms[0].getGroup();
-		if (g == null) return null;
-		Chain c = g.getChain();
-		if (c == null) return null;
-		return c.getStructure();
 	}
 
 }

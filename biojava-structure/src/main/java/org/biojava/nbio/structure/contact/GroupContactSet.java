@@ -21,100 +21,92 @@
 package org.biojava.nbio.structure.contact;
 
 import org.biojava.nbio.structure.Atom;
+import org.biojava.nbio.structure.Chain;
+import org.biojava.nbio.structure.EntityInfo;
 import org.biojava.nbio.structure.Group;
-import org.biojava.nbio.structure.ResidueNumber;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.function.Function;
 
 /**
  * A set of residue-residue contacts.
- * Relies on residue indices (based on SEQRES and starting with 1) to store the pairs
- * and thus to match contacts.
+ * Relies on residue indices to store the pairs and to match contacts.
  *
- * @author duarte_j
- * @see ResidueIdentifier
+ * Defining an integer index from a Group can be customised by passing a lambda that computes index from Group.
+ *
+ * @author Jose Duarte
  */
 public class GroupContactSet implements Serializable, Iterable<GroupContact>{
 
 	private static final long serialVersionUID = 1L;
 
-	private HashMap<Pair<ResidueIdentifier>, GroupContact> contacts;
+	private static final Logger logger = LoggerFactory.getLogger(GroupContactSet.class);
+
+	private Map<Pair<Integer>, GroupContact> contacts;
+
+	private Function<Group, Integer> indexFunction;
 
 	public GroupContactSet() {
-		contacts = new HashMap<Pair<ResidueIdentifier>, GroupContact>();
+		contacts = new HashMap<>();
+		indexFunction = getDefaultIndexFunction();
 	}
 
 	/**
 	 * Constructs a <code>GroupContactSet</code> by collapsing the given <code>AtomContactSet</code> into
 	 * residue-residue (group-group) contacts.
-	 * @param atomContacts
+	 * Uses {@link #getDefaultIndexFunction()} to compute indices from Groups
+ 	 * @param atomContacts a set of atom-atom contacts
 	 */
 	public GroupContactSet(AtomContactSet atomContacts) {
-		contacts = new HashMap<Pair<ResidueIdentifier>, GroupContact>();
+		contacts = new HashMap<>();
 		atoms2groups(atomContacts);
+		indexFunction = getDefaultIndexFunction();
+	}
+
+	/**
+	 * Constructs a <code>GroupContactSet</code> by collapsing the given <code>AtomContactSet</code> into
+	 * residue-residue (group-group) contacts.
+	 * @param atomContacts a set of atom-atom contacts
+	 * @param indexFunction the function to compute indices from Groups
+	 */
+	public GroupContactSet(AtomContactSet atomContacts, Function<Group, Integer> indexFunction) {
+		contacts = new HashMap<>();
+		atoms2groups(atomContacts);
+		this.indexFunction = indexFunction;
+	}
+
+	public void setGroupToIndexFunction(Function<Group, Integer> indexFunction) {
+		this.indexFunction = indexFunction;
 	}
 
 	private void atoms2groups(AtomContactSet atomContacts) {
-
 
 		for (AtomContact atomContact:atomContacts) {
 
 			Pair<Atom> atomPair = atomContact.getPair();
 
-			Group iResidue = atomPair.getFirst().getGroup();
-			Group jResidue = atomPair.getSecond().getGroup();
+			Group iGroup = atomPair.getFirst().getGroup();
+			Group jGroup = atomPair.getSecond().getGroup();
 
 			// we skip the self-residue contacts
-			if (iResidue.equals(jResidue)) continue;
+			if (iGroup.equals(jGroup)) continue;
 
-			Pair<Group> residuePair = new Pair<Group> (iResidue, jResidue);
-			Pair<ResidueIdentifier> pair = new Pair<ResidueIdentifier>(new ResidueIdentifier(iResidue), new ResidueIdentifier(jResidue));
+			Pair<Group> residuePair = new Pair<> (iGroup, jGroup);
+			Pair<Integer> pair = new Pair<>(indexFunction.apply(iGroup), indexFunction.apply(jGroup));
 
-			if (!contacts.containsKey(pair)) {
+			GroupContact groupContact = contacts.computeIfAbsent(pair, k -> new GroupContact(residuePair));
 
-				GroupContact groupContact = new GroupContact();
-				groupContact.setPair(residuePair);
-				groupContact.addAtomContact(atomContact);
-
-				contacts.put(pair, groupContact);
-
-			} else {
-
-				GroupContact groupContact = contacts.get(pair);
-
-				groupContact.addAtomContact(atomContact);
-
-			}
-
+			groupContact.addAtomContact(atomContact);
 		}
 	}
 
 	public void add(GroupContact groupContact) {
-		contacts.put(getResIdPairFromContact(groupContact),groupContact);
-	}
-
-	/**
-	 * Tell whether the given group pair is a contact in this GroupContactSet,
-	 * the comparison is done by matching residue numbers and chain identifiers
-	 * @param group1
-	 * @param group2
-	 * @return
-	 */
-	public boolean hasContact(Group group1, Group group2) {
-		return hasContact(group1.getResidueNumber(),group2.getResidueNumber());
-	}
-
-	/**
-	 * Tell whether the given pair is a contact in this GroupContactSet,
-	 * the comparison is done by matching residue numbers and chain identifiers
-	 * @param resNumber1
-	 * @param resNumber2
-	 * @return
-	 */
-	public boolean hasContact(ResidueNumber resNumber1, ResidueNumber resNumber2) {
-		return contacts.containsKey(new Pair<ResidueNumber>(resNumber1, resNumber2));
+		contacts.put(getResIdPairFromContact(groupContact), groupContact);
 	}
 
 	/**
@@ -122,24 +114,12 @@ public class GroupContactSet implements Serializable, Iterable<GroupContact>{
 	 * in a chain-identifier independent way: contacts happening between different copies of
 	 * the same Compound(Entity) will be considered equal as long as they have the same
 	 * residue numbers.
-	 * @param resId1
-	 * @param resId2
-	 * @return
+	 * @param group1 first group of contact
+	 * @param group2 second group of contact
+	 * @return the contact
 	 */
-	public boolean hasContact(ResidueIdentifier resId1, ResidueIdentifier resId2) {
-
-		return contacts.containsKey(new Pair<ResidueIdentifier>(resId1, resId2));
-	}
-
-	/**
-	 * Returns the corresponding GroupContact or null if no contact exists between the 2 given groups
-	 * @param group1
-	 * @param group2
-	 * @return
-	 */
-	public GroupContact getContact(Group group1, Group group2) {
-		return contacts.get(
-				new Pair<ResidueNumber>(group1.getResidueNumber(),group2.getResidueNumber()));
+	public boolean hasContact(Group group1, Group group2) {
+		return contacts.containsKey(new Pair<>(indexFunction.apply(group1), indexFunction.apply(group2)));
 	}
 
 	public int size() {
@@ -151,10 +131,34 @@ public class GroupContactSet implements Serializable, Iterable<GroupContact>{
 		return contacts.values().iterator();
 	}
 
-	private Pair<ResidueIdentifier> getResIdPairFromContact(GroupContact groupContact) {
-		return new Pair<ResidueIdentifier>(
-				new ResidueIdentifier(groupContact.getPair().getFirst()),
-				new ResidueIdentifier(groupContact.getPair().getSecond()) );
-
+	private Pair<Integer> getResIdPairFromContact(GroupContact groupContact) {
+		return new Pair<>(
+				indexFunction.apply(groupContact.getPair().getFirst()),
+				indexFunction.apply(groupContact.getPair().getSecond()) );
 	}
+
+	/**
+	 * Function to get indices based on SEQRES all-chains-within-entity alignment (1-based indices).
+	 * @return the function to compute an index from a group
+	 */
+	public static Function<Group, Integer> getDefaultIndexFunction() {
+
+		return group -> {
+			Chain c = group.getChain();
+			if (c == null) {
+				logger.warn("Chain is not available for group {}. Contact comparison will not work for this residue", group.toString());
+				return -1;
+			} else {
+				EntityInfo comp = c.getEntityInfo();
+				if (comp == null) {
+					logger.warn("Entity is not available for group {}. Contact comparison will not work for this residue", group.toString());
+					return -1;
+				} else {
+					return comp.getAlignedResIndex(group, c);
+				}
+
+			}
+		};
+	}
+
 }

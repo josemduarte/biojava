@@ -66,13 +66,13 @@ public class SubunitExtractor {
 			int absMinLen, double fraction, int minLen) {
 
 		// The extracted subunit container
-		List<Subunit> subunits = new ArrayList<Subunit>();
+		List<Subunit> subunits = new ArrayList<>();
 
 		for (Chain c : structure.getPolyChains()) {
 			// Only take protein chains
 			if (c.isProtein()) {
 				Atom[] ca = StructureTools.getRepresentativeAtomArray(c);
-				logger.debug("Chain " + c.getId() + "; CA Atoms: " + ca.length + "; SEQRES: " + c.getSeqResSequence());
+				logger.debug("Chain {}; CA Atoms: {}; SEQRES: {}",  c.getId(), ca.length, c.getSeqResSequence());
 				if (ca.length==0)
 					continue;
 				subunits.add(new Subunit(ca, c.getId(), null, structure));

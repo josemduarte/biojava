@@ -50,6 +50,9 @@ public class Subunit {
 	private Atom[] reprAtoms;
 	private ProteinSequence sequence = null;
 
+	// Optional reference to a parent cluster
+	private SubunitCluster parentCluster;
+
 	/**
 	 * A Subunit is solely defined by the coordinates of the representative
 	 * Atoms of its residues. It can be identified with a StructureIdentifier
@@ -79,6 +82,7 @@ public class Subunit {
 		this.name = name;
 		this.identifier = identifier;
 		this.structure = structure;
+		this.parentCluster = null;
 	}
 
 	/**
@@ -93,6 +97,14 @@ public class Subunit {
 
 	public void setRepresentativeAtoms(Atom[] atoms) {
 		this.reprAtoms = atoms;
+	}
+
+	public SubunitCluster getParentCluster() {
+		return parentCluster;
+	}
+
+	public void setParentCluster(SubunitCluster parentCluster) {
+		this.parentCluster = parentCluster;
 	}
 
 	/**
