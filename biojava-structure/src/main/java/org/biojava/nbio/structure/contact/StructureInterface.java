@@ -607,7 +607,8 @@ public class StructureInterface implements Serializable, Comparable<StructureInt
 
 	/**
 	 * Calculates the contact overlap score between this StructureInterface and
-	 * the given one.
+	 * the given one. The calculation assumes that both interfaces come from the same structure. The ouput
+	 * will not necessarily make sense if the two interfaces come from different structures.
 	 * The two sides of the given StructureInterface need to match this StructureInterface
 	 * in the sense that they must come from the same Entity, i.e.
 	 * their residue numbers need to align with 100% identity, except for unobserved
@@ -620,17 +621,6 @@ public class StructureInterface implements Serializable, Comparable<StructureInt
 	 * @return the contact overlap score, range [0.0,1.0]
 	 */
 	private double getContactOverlapScoreByEntity(StructureInterface other, boolean invert) {
-
-		Structure thisStruct = getParentStructure();
-		Structure otherStruct = other.getParentStructure();
-
-		if (thisStruct!=otherStruct) {
-			// in the current implementation, comparison between different structure doesn't make much sense
-			// and won't even work since the compounds of both will never match. We warn because it
-			// really is not what this is intended for at the moment
-			logger.warn("Comparing interfaces from different structures, contact overlap score will be 0");
-			return 0;
-		}
 
 		Pair<Chain> thisChains = getParentChains();
 		Pair<Chain> otherChains = other.getParentChains();

@@ -1,6 +1,35 @@
 BioJava Changelog
 -----------------
 
+BioJava 6.0.0 (future release)
+==============================
+### Removed
+* All code related to All-vs-All structural alignments db calculation and access
+* JFatCatClient and all code depending on it
+* PDP domain providers (depended on JFatCatClient)
+* Support for retrieving structure data with prefix "PDP:" (AtomCache, StructureIO)
+* RemoteScopInstallation consuming data provided by source.rcsb.org
+* The whole `org.biojava.nbio.structure.rcsb` package, a client for the legacy RCSB PDB APIs (disappearing in Nov 2020)
+* The whole `org.biojava.nbio.structure.validation` package
+* The `org.biojava.nbio.structure.domain.PDBDomainProvider` class to pull domain definitions from legacy RCSB PDB APIs
+* Support for automatically fetching dssp files from RCSB (`org.biojava.nbio.structure.secstruc.DSSPParser.fetch()`)
+* `org.biojava.nbio.structure.PDBStatus`: simplified `Status` enum to 3 states, with OBSOLETE now called REMOVED
+* `org.biojava.nbio.structure.PDBStatus`: removed `getReplacement` and `getReplaces` 
+
+BioJava 5.4.0
+=============
+### Added
+* Minimal read support for mmCIF files with branched entities (upcoming PDB release July 2020). The new entity type is understood now but branched entities are still treated as non-polymers within BioJava. #868
+* InterfaceFinder class to find interfaces of a given PDB assembly #867
+* New switch in Subunit clusterer `useEntityIdForSeqIdentityDetermination` #857 #859
+
+### Changed
+* Now genbank parser will allow 5'<3' for circular DNA #855
+
+### Fixed
+* Issue in bonds between atoms of different alt locs (https://github.com/rcsb/mmtf/issues/44) #854
+* Upgrade ciftools-java dependency to latest java-8 compatible release 0.7.1
+
 BioJava 5.3.0
 =============
 ### New features

@@ -183,11 +183,12 @@ public class TestQuatSymmetryDetectorExamples {
 				localSymmetries.put("A8","D2");
 			testLocalSymmetries.add(localSymmetries);
 
+		/* Bioassembly for 3R8R changed in January 2020 (PR #867)
 		testIds.add("BIO:3R8R:1");
 			testStoichiometries.add("A12");
 			localSymmetries = new HashMap<>();
 				localSymmetries.put("A10","D5");
-			testLocalSymmetries.add(localSymmetries);
+			testLocalSymmetries.add(localSymmetries);*/
 
 		testIds.add("BIO:1O18:1");
 			testStoichiometries.add("A14B6C5D5");
@@ -239,7 +240,7 @@ public class TestQuatSymmetryDetectorExamples {
 		testIds.add("BIO:3JC9:1");
 			testStoichiometries.add("A12B12C12D12E12F12G5H2");
 			localSymmetries = new HashMap<>();
-				localSymmetries.put("A12C12D12E12F12H2","C2");
+				localSymmetries.put("A12B12C12D12E12H2","C2");
 				localSymmetries.put("A12B12C12D12E12F12","C12");
 				localSymmetries.put("G5","H");
 			testLocalSymmetries.add(localSymmetries);
@@ -267,7 +268,7 @@ public class TestQuatSymmetryDetectorExamples {
 			for (QuatSymmetryResults local:foundLocal) {
 				logger.info("Found stoichiometry "+local.getStoichiometry().toString()+" with symmetry "+local.getSymmetry());
 				assertTrue("Stoichiometry "+local.getStoichiometry().toString()+" not expected for "+testIds.get(iTest),
-						refLocal.keySet().contains(local.getStoichiometry().toString()));
+						refLocal.containsKey(local.getStoichiometry().toString()));
 
 				assertEquals("Symmetry "+local.getSymmetry()+" with stoichiometry "+local.getStoichiometry().toString()+
 								" not expected for "+testIds.get(iTest),

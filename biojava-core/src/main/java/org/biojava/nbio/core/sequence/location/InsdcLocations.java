@@ -79,7 +79,7 @@ public class InsdcLocations {
 	 * Used to describe a 5' to 3' ordering but no firm assurance it is correct
 	 */
 	public static class OrderLocation extends SimpleLocation {
-		public OrderLocation(List subLocations){
+		public OrderLocation(List<Location> subLocations){
 			super(
 					Location.Tools.getMin(subLocations).getStart(),
 					Location.Tools.getMax(subLocations).getEnd()
@@ -132,7 +132,7 @@ public class InsdcLocations {
 	 * locations
 	 */
 	public static class GroupLocation extends SimpleLocation {
-		public GroupLocation(List subLocations){
+		public GroupLocation(List<Location> subLocations){
 			super(
 					Location.Tools.getMin(subLocations).getStart(),
 					Location.Tools.getMax(subLocations).getEnd()
@@ -145,6 +145,11 @@ public class InsdcLocations {
 
 		public GroupLocation(Location... subLocations) {
 			this(Arrays.asList(subLocations));
+		}
+
+		public GroupLocation(boolean isCircular, Location... subLocations) {
+			this(Arrays.asList(subLocations));
+			setCircular(isCircular);
 		}
 
 		public GroupLocation(Point start, Point end, Strand strand,

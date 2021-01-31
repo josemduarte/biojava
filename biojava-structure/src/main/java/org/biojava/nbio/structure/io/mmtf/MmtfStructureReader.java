@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -178,7 +179,7 @@ public class MmtfStructureReader implements StructureAdapterInterface, Serializa
 			int chainCount) {
 		modelNumber = inputModelNumber;
 		structure.addModel(new ArrayList<Chain>(chainCount));
-		chainMap.add(new HashMap<>());
+		chainMap.add(new LinkedHashMap<>());
 	}
 
 	/* (non-Javadoc)
@@ -214,6 +215,9 @@ public class MmtfStructureReader implements StructureAdapterInterface, Serializa
 			char singleLetterCode, int sequenceIndexId, int secStructType) {
 		// Get the polymer type
 		ResidueType residueType = ResidueType.getResidueTypeFromString(chemCompType);
+		if (residueType == null)
+			throw new IllegalStateException("Couldn't resolve residue type for "+ chemCompType);
+
 		int polymerType = getGroupTypIndicator(residueType.polymerType);
 		switch (polymerType) {
 		case 1:
