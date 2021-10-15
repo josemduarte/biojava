@@ -19,6 +19,9 @@
 package org.biojava.nbio.structure.jaligner;
 
 
+import org.biojava.nbio.structure.Atom;
+import org.biojava.nbio.structure.AtomImpl;
+
 import java.text.DecimalFormat;
 
 /**
@@ -32,7 +35,7 @@ public final class Alignment {
 	/**
 	 * Gap character
 	 */
-	public static final char GAP = '-';
+	public static final Atom GAP = new AtomImpl(); // TODO fill with some placeholder data to identify as gap
 
 	/**
 	 * Default name for sequence #1
@@ -114,9 +117,9 @@ public final class Alignment {
 	 */
 	private int gaps;
 
-	private Sequence originalSequence1;
+	private AtomGroupSequence originalSequence1;
 
-	private Sequence originalSequence2;
+	private AtomGroupSequence originalSequence2;
 
 	/**
 	 * Constructor for Alignment
@@ -527,11 +530,11 @@ public final class Alignment {
 	}
 
 	/**
-	 * Returns original {@link Sequence} #1
+	 * Returns original {@link AtomGroupSequence} #1
 	 * 
-	 * @return original {@link Sequence} #1
+	 * @return original {@link AtomGroupSequence} #1
 	 */
-	public Sequence getOriginalSequence1() {
+	public AtomGroupSequence getOriginalSequence1() {
 		return originalSequence1;
 	}
 
@@ -539,16 +542,16 @@ public final class Alignment {
 	 * 
 	 * @param originalSequence1
 	 */
-	public void setOriginalSequence1(Sequence originalSequence1) {
+	public void setOriginalSequence1(AtomGroupSequence originalSequence1) {
 		this.originalSequence1 = originalSequence1;
 	}
 
 	/**
-	 * Returns original {@link Sequence} #2
+	 * Returns original {@link AtomGroupSequence} #2
 	 * 
-	 * @return original {@link Sequence} #2
+	 * @return original {@link AtomGroupSequence} #2
 	 */
-	public Sequence getOriginalSequence2() {
+	public AtomGroupSequence getOriginalSequence2() {
 		return originalSequence2;
 	}
 
@@ -556,7 +559,7 @@ public final class Alignment {
 	 * 
 	 * @param originalSequence2
 	 */
-	public void setOriginalSequence2(Sequence originalSequence2) {
+	public void setOriginalSequence2(AtomGroupSequence originalSequence2) {
 		this.originalSequence2 = originalSequence2;
 	}
 
@@ -618,14 +621,14 @@ public final class Alignment {
 				buffer.append(a1.getOriginalSequence1());
 				buffer.append(a2.getOriginalSequence1());
 
-				sum.setOriginalSequence1(new Sequence(buffer.toString()));
+				sum.setOriginalSequence1(new AtomGroupSequence(buffer.toString()));
 
 				buffer = new StringBuffer();
 
 				buffer.append(a1.getOriginalSequence2());
 				buffer.append(a2.getOriginalSequence2());
 
-				sum.setOriginalSequence2(new Sequence(buffer.toString()));
+				sum.setOriginalSequence2(new AtomGroupSequence(buffer.toString()));
 
 				buffer = new StringBuffer();
 

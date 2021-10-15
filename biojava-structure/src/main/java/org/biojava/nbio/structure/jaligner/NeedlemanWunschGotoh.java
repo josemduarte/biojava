@@ -18,6 +18,7 @@
 package org.biojava.nbio.structure.jaligner;
 
 
+import org.biojava.nbio.structure.Atom;
 
 /**
  * An implementation of the Needleman-Wunsch algorithm with Gotoh's improvement
@@ -44,8 +45,6 @@ public final class NeedlemanWunschGotoh {
      *            sequence #1
      * @param s2
      *            sequence #2
-     * @param matrix
-     *            scoring matrix ({@link Matrix})
      * @param o
      *            open gap penalty
      * @param e
@@ -54,12 +53,10 @@ public final class NeedlemanWunschGotoh {
      *         alignment score and alignment statistics
      * @see Matrix
      */
-    public static Alignment align(Sequence s1, Sequence s2, Matrix matrix, float o, float e) {
+    public static Alignment align(AtomGroupSequence s1, AtomGroupSequence s2, float o, float e) {
 
-        float[][] scores = matrix.getScores();
-
-        Sequence _s1;
-        Sequence _s2;
+        AtomGroupSequence _s1;
+        AtomGroupSequence _s2;
 
         if (s1.length() < s2.length()) {
             _s1 = s2;
@@ -89,11 +86,10 @@ public final class NeedlemanWunschGotoh {
             lengths[j] = j;
         }
 
-        Cell cell = construct(_s1, _s2, scores, o, e, pointers, lengths);
+        Cell cell = construct(_s1, _s2, o, e, pointers, lengths);
 
         Alignment alignment = traceback(_s1, _s2, matrix, pointers, cell, lengths);
 
-        alignment.setMatrix(matrix);
         alignment.setOpen(o);
         alignment.setExtend(e);
         alignment.setName1(_s1.getId());
@@ -111,8 +107,6 @@ public final class NeedlemanWunschGotoh {
      *            sequence #1
      * @param s2
      *            sequence #2
-     * @param matrix
-     *            scoring matrix
      * @param o
      *            open gap penalty
      * @param e
@@ -122,12 +116,12 @@ public final class NeedlemanWunschGotoh {
      * 
      * @return The cell where the traceback starts.
      */
-    private static Cell construct(Sequence s1, Sequence s2, float[][] matrix, float o, float e, byte[] pointers, int[] lengths) {
+    private static Cell construct(AtomGroupSequence s1, AtomGroupSequence s2, float o, float e, byte[] pointers, int[] lengths) {
 
         //logger.info("Started...");
 
-        char[] a1 = s1.toArray();
-        char[] a2 = s2.toArray();
+        Atom[] a1 = s1.toAtomArray();
+        Atom[] a2 = s2.toAtomArray();
 
         int m = s1.length() + 1; // number of rows in similarity matrix
         int n = s2.length() + 1; // number of columns in similarity matrix
@@ -159,7 +153,8 @@ public final class NeedlemanWunschGotoh {
             v[0] = -o - (i - 1) * e;
             for (int j = 1, l = k + 1; j < n; j++, l++) { // for all columns
 
-                similarityScore = matrix[a1[i - 1]][a2[j - 1]];
+                // TODO invert so that it is a score (now a distance)
+                similarityScore = (float)a1[i - 1].getCoordsAsPoint3d().distance(a2[j - 1].getCoordsAsPoint3d());
 
                 f = vDiagonal + similarityScore;// from diagonal
 
@@ -237,11 +232,11 @@ public final class NeedlemanWunschGotoh {
      * @see Cell
      * @see Alignment
      */
-    private static Alignment traceback(Sequence s1, Sequence s2, Matrix m, byte[] pointers, Cell cell, int[] lengths) {
+    private static Alignment traceback(AtomGroupSequence s1, AtomGroupSequence s2, Matrix m, byte[] pointers, Cell cell, int[] lengths) {
         //logger.info("Started...");
 
-        char[] array1 = s1.toArray();
-        char[] array2 = s2.toArray();
+        Atom[] array1 = s1.toAtomArray();
+        Atom[] array2 = s2.toAtomArray();
         float[][] scores = m.getScores();
 
         Alignment alignment = new Alignment();
@@ -250,9 +245,9 @@ public final class NeedlemanWunschGotoh {
         // maximum length after the aligned sequences
         int maxlen = s1.length() + s2.length();
 
-        char[] reversed1 = new char[maxlen]; // reversed sequence #1
-        char[] reversed2 = new char[maxlen]; // reversed sequence #2
-        char[] reversed3 = new char[maxlen]; // reversed markup
+        Atom[] reversed1 = new Atom[maxlen]; // reversed sequence #1
+        Atom[] reversed2 = new Atom[maxlen]; // reversed sequence #2
+        Atom[] reversed3 = new Atom[maxlen]; // reversed markup
 
         int len1 = 0; // length of sequence #1 after alignment
         int len2 = 0; // length of sequence #2 after alignment
