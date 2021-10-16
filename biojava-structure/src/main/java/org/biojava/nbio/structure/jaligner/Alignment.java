@@ -599,68 +599,68 @@ public final class Alignment {
 	 *            The 2nd alignment
 	 * @return the sum of two alignment
 	 */
-	public static Alignment add(Alignment a1, Alignment a2) {
-
-		if (a1 == null) {
-			if (a2 == null) {
-				return null;
-			} else {
-				return copy(a2);
-			}
-		} else {
-			if (a2 == null) {
-				return copy(a1);
-			} else {
-				Alignment sum = new Alignment();
-
-				StringBuffer buffer = new StringBuffer();
-
-				buffer.append(a1.getOriginalSequence1());
-				buffer.append(a2.getOriginalSequence1());
-
-				sum.setOriginalSequence1(new AtomGroupSequence(buffer.toString()));
-
-				buffer = new StringBuffer();
-
-				buffer.append(a1.getOriginalSequence2());
-				buffer.append(a2.getOriginalSequence2());
-
-				sum.setOriginalSequence2(new AtomGroupSequence(buffer.toString()));
-
-				buffer = new StringBuffer();
-
-				buffer.append(a1.getSequence1());
-				buffer.append(a2.getSequence1());
-
-				sum.setSequence1(buffer.toString().toCharArray());
-
-				buffer = new StringBuffer();
-
-				buffer.append(a1.getSequence2());
-				buffer.append(a2.getSequence2());
-
-				sum.setSequence2(buffer.toString().toCharArray());
-
-				buffer = new StringBuffer();
-
-				buffer.append(a1.getMarkupLine());
-				buffer.append(a2.getMarkupLine());
-
-				sum.setMarkupLine(buffer.toString().toCharArray());
-
-				sum.setScore(a1.getScore() + a2.getScore());
-				sum.setGaps(a1.getGaps() + a2.getGaps());
-
-				sum.setStart1(a1.getStart1());
-				sum.setStart2(a1.getStart2());
-				sum.setExtend(a1.getExtend());
-				sum.setOpen(a1.getOpen());
-				sum.setMatrix(a1.getMatrix());
-
-				return sum;
-			}
-		}
-	}
+//	public static Alignment add(Alignment a1, Alignment a2) {
+//
+//		if (a1 == null) {
+//			if (a2 == null) {
+//				return null;
+//			} else {
+//				return copy(a2);
+//			}
+//		} else {
+//			if (a2 == null) {
+//				return copy(a1);
+//			} else {
+//				Alignment sum = new Alignment();
+//
+//				StringBuffer buffer = new StringBuffer();
+//
+//				buffer.append(a1.getOriginalSequence1());
+//				buffer.append(a2.getOriginalSequence1());
+//
+//				sum.setOriginalSequence1(new AtomGroupSequence(buffer.toString()));
+//
+//				buffer = new StringBuffer();
+//
+//				buffer.append(a1.getOriginalSequence2());
+//				buffer.append(a2.getOriginalSequence2());
+//
+//				sum.setOriginalSequence2(new AtomGroupSequence(buffer.toString()));
+//
+//				buffer = new StringBuffer();
+//
+//				buffer.append(a1.getSequence1());
+//				buffer.append(a2.getSequence1());
+//
+//				sum.setSequence1(buffer.toString().toCharArray());
+//
+//				buffer = new StringBuffer();
+//
+//				buffer.append(a1.getSequence2());
+//				buffer.append(a2.getSequence2());
+//
+//				sum.setSequence2(buffer.toString().toCharArray());
+//
+//				buffer = new StringBuffer();
+//
+//				buffer.append(a1.getMarkupLine());
+//				buffer.append(a2.getMarkupLine());
+//
+//				sum.setMarkupLine(buffer.toString().toCharArray());
+//
+//				sum.setScore(a1.getScore() + a2.getScore());
+//				sum.setGaps(a1.getGaps() + a2.getGaps());
+//
+//				sum.setStart1(a1.getStart1());
+//				sum.setStart2(a1.getStart2());
+//				sum.setExtend(a1.getExtend());
+//				sum.setOpen(a1.getOpen());
+//				sum.setMatrix(a1.getMatrix());
+//
+//				return sum;
+//			}
+//		}
+//	}
 
 	/**
 	 * Copies an alignment to another alignment.

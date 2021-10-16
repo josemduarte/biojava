@@ -88,7 +88,7 @@ public final class NeedlemanWunschGotoh {
 
         Cell cell = construct(_s1, _s2, o, e, pointers, lengths);
 
-        Alignment alignment = traceback(_s1, _s2, matrix, pointers, cell, lengths);
+        Alignment alignment = traceback(_s1, _s2, pointers, cell, lengths);
 
         alignment.setOpen(o);
         alignment.setExtend(e);
@@ -221,8 +221,6 @@ public final class NeedlemanWunschGotoh {
      *            sequence #1
      * @param s2
      *            sequence #2
-     * @param m
-     *            scoring matrix
      * @param pointers
      *            traceback matrix
      * @param cell
@@ -232,12 +230,12 @@ public final class NeedlemanWunschGotoh {
      * @see Cell
      * @see Alignment
      */
-    private static Alignment traceback(AtomGroupSequence s1, AtomGroupSequence s2, Matrix m, byte[] pointers, Cell cell, int[] lengths) {
+    private static Alignment traceback(AtomGroupSequence s1, AtomGroupSequence s2, byte[] pointers, Cell cell, int[] lengths) {
         //logger.info("Started...");
 
         char[] array1 = s1.toCharArray();
         char[] array2 = s2.toCharArray();
-        float[][] scores = m.getScores();
+        //float[][] scores = m.getScores();
 
         Alignment alignment = new Alignment();
         alignment.setScore(cell.getScore());
@@ -284,9 +282,9 @@ public final class NeedlemanWunschGotoh {
                     reversed3[len3++] = Markups.IDENTITY;
                     identity++;
                     similarity++;
-                } else if (scores[c1][c2] > 0) {
-                    reversed3[len3++] = Markups.SIMILARITY;
-                    similarity++;
+//                } else if (scores[c1][c2] > 0) {
+//                    reversed3[len3++] = Markups.SIMILARITY;
+//                    similarity++;
                 } else {
                     reversed3[len3++] = Markups.MISMATCH;
                 }
@@ -309,9 +307,9 @@ public final class NeedlemanWunschGotoh {
                     reversed3[len3++] = Markups.IDENTITY;
                     identity++;
                     similarity++;
-                } else if (scores[c1][c2] > 0) {
-                    reversed3[len3++] = Markups.SIMILARITY;
-                    similarity++;
+//                } else if (scores[c1][c2] > 0) {
+//                    reversed3[len3++] = Markups.SIMILARITY;
+//                    similarity++;
                 } else {
                     reversed3[len3++] = Markups.MISMATCH;
                 }
@@ -342,9 +340,9 @@ public final class NeedlemanWunschGotoh {
                     reversed3[len3++] = Markups.IDENTITY;
                     identity++;
                     similarity++;
-                } else if (scores[c1][c2] > 0) {
-                    reversed3[len3++] = Markups.SIMILARITY;
-                    similarity++;
+//                } else if (scores[c1][c2] > 0) {
+//                    reversed3[len3++] = Markups.SIMILARITY;
+//                    similarity++;
                 } else {
                     reversed3[len3++] = Markups.MISMATCH;
                 }
