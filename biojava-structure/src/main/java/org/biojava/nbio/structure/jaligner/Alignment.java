@@ -19,9 +19,6 @@
 package org.biojava.nbio.structure.jaligner;
 
 
-import org.biojava.nbio.structure.Atom;
-import org.biojava.nbio.structure.AtomImpl;
-
 import java.text.DecimalFormat;
 
 /**
@@ -35,7 +32,7 @@ public final class Alignment {
 	/**
 	 * Gap character
 	 */
-	public static final Atom GAP = new AtomImpl(); // TODO fill with some placeholder data to identify as gap
+	public static final char GAP = '-';
 
 	/**
 	 * Default name for sequence #1

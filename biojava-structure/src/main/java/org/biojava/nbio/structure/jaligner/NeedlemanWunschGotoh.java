@@ -235,8 +235,8 @@ public final class NeedlemanWunschGotoh {
     private static Alignment traceback(AtomGroupSequence s1, AtomGroupSequence s2, Matrix m, byte[] pointers, Cell cell, int[] lengths) {
         //logger.info("Started...");
 
-        Atom[] array1 = s1.toAtomArray();
-        Atom[] array2 = s2.toAtomArray();
+        char[] array1 = s1.toCharArray();
+        char[] array2 = s2.toCharArray();
         float[][] scores = m.getScores();
 
         Alignment alignment = new Alignment();
@@ -245,9 +245,9 @@ public final class NeedlemanWunschGotoh {
         // maximum length after the aligned sequences
         int maxlen = s1.length() + s2.length();
 
-        Atom[] reversed1 = new Atom[maxlen]; // reversed sequence #1
-        Atom[] reversed2 = new Atom[maxlen]; // reversed sequence #2
-        Atom[] reversed3 = new Atom[maxlen]; // reversed markup
+        char[] reversed1 = new char[maxlen]; // reversed sequence #1
+        char[] reversed2 = new char[maxlen]; // reversed sequence #2
+        char[] reversed3 = new char[maxlen]; // reversed markup
 
         int len1 = 0; // length of sequence #1 after alignment
         int len2 = 0; // length of sequence #2 after alignment

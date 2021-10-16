@@ -21,6 +21,7 @@ package org.biojava.nbio.structure.jaligner;
 
 import org.biojava.nbio.structure.Atom;
 import org.biojava.nbio.structure.Group;
+import org.biojava.nbio.structure.StructureTools;
 
 import java.io.Serializable;
 import java.util.List;
@@ -116,6 +117,14 @@ public class AtomGroupSequence implements Serializable {
 	 */
 	public Atom[] toAtomArray() {
 		return atomGroups.stream().map(g->g.getAtom("CA")).toArray(Atom[]::new);
+	}
+
+	public char[] toCharArray() {
+		char[] chars = new char[atomGroups.size()];
+		for (int i=0; i<atomGroups.size(); i++) {
+			chars[i] = StructureTools.get1LetterCodeAmino(atomGroups.get(i).getPDBName());
+		}
+		return chars;
 	}
     
     /**
