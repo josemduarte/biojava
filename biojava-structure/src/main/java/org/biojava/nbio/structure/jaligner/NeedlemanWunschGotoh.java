@@ -153,8 +153,9 @@ public final class NeedlemanWunschGotoh {
             v[0] = -o - (i - 1) * e;
             for (int j = 1, l = k + 1; j < n; j++, l++) { // for all columns
 
-                // TODO invert so that it is a score (now a distance)
-                similarityScore = (float)a1[i - 1].getCoordsAsPoint3d().distance(a2[j - 1].getCoordsAsPoint3d());
+                // TODO find a more solid inversion procedure
+                // TODO calculate only below 10 cutoff
+                similarityScore = (float) (50.0 - a1[i - 1].getCoordsAsPoint3d().distance(a2[j - 1].getCoordsAsPoint3d()));
 
                 f = vDiagonal + similarityScore;// from diagonal
 

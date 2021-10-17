@@ -2,18 +2,22 @@ package org.biojava.nbio.structure.jaligner;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.biojava.nbio.structure.Chain;
-import org.biojava.nbio.structure.contact.Pair;
+import org.biojava.nbio.structure.Calc;
+import org.biojava.nbio.structure.Structure;
+import org.biojava.nbio.structure.StructureIO;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.junit.Test;
 
+import javax.vecmath.Matrix4d;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestAlignmentFromTransform {
 
@@ -26,18 +30,38 @@ public class TestAlignmentFromTransform {
     @Test
     public void testAlignerAgainstRcsbAlignmentService() throws Exception {
 
-        getAlignmentFromRcsbAlignmentService("1FSL", "A", "4HHB", "A");
-//        AtomGroupSequence atoms1 = new AtomGroupSequence();
-//        AtomGroupSequence atoms2 = new AtomGroupSequence();
-//        atoms1.setAtomGroups();
-//        atoms2.setAtomGroups();
-//        Alignment ali = NeedlemanWunschGotoh.align(atoms1, atoms2, 10, 1);
-//        System.out.println(ali.getSequence1());
-//        System.out.println(ali.getMarkupLine());
-//        System.out.println(ali.getSequence2());
+        String pdbId1 = "1FSL";
+        String asymId1 = "A";
+        String pdbId2 = "4HHB";
+        String asymId2 = "A";
+        StrucAlignment strucAli = getAlignmentFromRcsbAlignmentService(pdbId1, asymId1, pdbId2, asymId2);
+
+        Structure s1 = StructureIO.getStructure(pdbId1);
+        Structure s2 = StructureIO.getStructure(pdbId2);
+        Calc.transform(s1.getPolyChain(asymId1), strucAli.matrices.get(0));
+        Calc.transform(s2.getPolyChain(asymId2), strucAli.matrices.get(1));
+
+        AtomGroupSequence atoms1 = new AtomGroupSequence(s1.getPolyChain(asymId1).getAtomGroups());
+        AtomGroupSequence atoms2 = new AtomGroupSequence(s2.getPolyChain(asymId2).getAtomGroups());
+        long start = System.currentTimeMillis();
+        Alignment ali = NeedlemanWunschGotoh.align(atoms1, atoms2, 6, 1);
+        long end = System.currentTimeMillis();
+        System.out.println("Alignment calculated in " + (end-start) + "ms");
+        System.out.println(ali.getSequence1());
+        System.out.println(ali.getMarkupLine());
+        System.out.println(ali.getSequence2());
     }
 
-    private Pair<Chain> getAlignmentFromRcsbAlignmentService(String entryId1, String asymId1, String entryId2, String asymId2) throws IOException, InterruptedException {
+    private static class StrucAlignment {
+        List<Matrix4d> matrices;
+        List<String> seqs;
+        private StrucAlignment(List<Matrix4d> matrices, List<String> seqs) {
+            this.matrices = matrices;
+            this.seqs = seqs;
+        }
+    }
+
+    private StrucAlignment getAlignmentFromRcsbAlignmentService(String entryId1, String asymId1, String entryId2, String asymId2) throws IOException, InterruptedException {
         String query = String.format(
                 "{" +
                     "\"context\":{" +
@@ -48,7 +72,6 @@ public class TestAlignmentFromTransform {
 
         FormDataMultiPart multiPart = new FormDataMultiPart();
         multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
-
         multiPart.field("query", query);
 
         Client client = ClientBuilder.newBuilder()
@@ -58,10 +81,8 @@ public class TestAlignmentFromTransform {
                 .request(MediaType.TEXT_PLAIN)
                 .header("Content-Type", "multipart/form-data")
                 .post(Entity.entity(multiPart, multiPart.getMediaType()));
-
         if (response.getStatus() !=200)
             throw new IOException("Bad response status: " + response.getStatus());
-
         String token = response.readEntity(String.class);
 
         JsonNode node = null;
@@ -83,9 +104,30 @@ public class TestAlignmentFromTransform {
         }
         if (node == null) throw new IOException("Timed out");
         //System.out.println(node.get("results").toString());
+        List<Matrix4d> matrices = new ArrayList<>();
+        List<String> seqs = new ArrayList<>();
         for (JsonNode oneResult : node.get("results")) {
-            System.out.println(oneResult.get("blocks").toString());
+            for (JsonNode oneBlock : oneResult.get("blocks")) {
+                for (JsonNode t : oneBlock.get("transformations")) {
+                    Matrix4d m = new Matrix4d();
+                    int i = 0, j = 0;
+                    for (JsonNode v : t) {
+                        m.setElement(i++, j, v.asDouble());
+                        if (i == 4) {
+                            j++;
+                            i = 0;
+                        }
+                    }
+                    matrices.add(m);
+                }
+            }
+            for (JsonNode oneSeqAli : oneResult.get("sequence_alignment")) {
+                seqs.add(oneSeqAli.get("sequence").asText());
+//                for (JsonNode r : oneSeqAli.get("regions")) {
+//                    System.out.println(r.toString());
+//                }
+            }
         }
-        return null;
+        return new StrucAlignment(matrices, seqs);
     }
 }
