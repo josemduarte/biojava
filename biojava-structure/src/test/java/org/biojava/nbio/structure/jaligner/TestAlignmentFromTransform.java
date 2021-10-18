@@ -2,9 +2,17 @@ package org.biojava.nbio.structure.jaligner;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.biojava.nbio.structure.Atom;
 import org.biojava.nbio.structure.Calc;
+import org.biojava.nbio.structure.Chain;
 import org.biojava.nbio.structure.Structure;
+import org.biojava.nbio.structure.StructureException;
 import org.biojava.nbio.structure.StructureIO;
+import org.biojava.nbio.structure.StructureTools;
+import org.biojava.nbio.structure.align.StructureAlignment;
+import org.biojava.nbio.structure.align.StructureAlignmentFactory;
+import org.biojava.nbio.structure.align.fatcat.FatCatRigid;
+import org.biojava.nbio.structure.align.model.AFPChain;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.junit.Test;
@@ -38,6 +46,9 @@ public class TestAlignmentFromTransform {
 
         Structure s1 = StructureIO.getStructure(pdbId1);
         Structure s2 = StructureIO.getStructure(pdbId2);
+
+        computeFatcatAlignment(s1.getPolyChain(asymId1), s2.getPolyChain(asymId2));
+
         Calc.transform(s1.getPolyChain(asymId1), strucAli.matrices.get(0));
         Calc.transform(s2.getPolyChain(asymId2), strucAli.matrices.get(1));
 
@@ -129,5 +140,24 @@ public class TestAlignmentFromTransform {
             }
         }
         return new StrucAlignment(matrices, seqs);
+    }
+
+    private StrucAlignment computeFatcatAlignment(Chain c1, Chain c2) throws StructureException {
+        // Get StructureAlignment instance
+        StructureAlignment algorithm  = StructureAlignmentFactory.getAlgorithm(FatCatRigid.algorithmName);
+
+        Atom[] ca1 = StructureTools.getAtomCAArray(c1);
+        Atom[] ca2 = StructureTools.getAtomCAArray(c2);
+
+        // Perform the alignment
+        AFPChain afpChain = algorithm.align(ca1,ca2);
+
+        // Print text output
+        System.out.println(afpChain.toFatcat(ca1,ca2));
+
+        System.out.println(afpChain.getAlnseq1());
+        System.out.println(afpChain.getAlnseq2());
+
+        return null;
     }
 }
