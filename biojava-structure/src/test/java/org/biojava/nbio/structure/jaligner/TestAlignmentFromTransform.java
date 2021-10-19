@@ -13,11 +13,13 @@ import org.biojava.nbio.structure.align.StructureAlignment;
 import org.biojava.nbio.structure.align.StructureAlignmentFactory;
 import org.biojava.nbio.structure.align.fatcat.FatCatRigid;
 import org.biojava.nbio.structure.align.model.AFPChain;
+import org.biojava.nbio.structure.jama.Matrix;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.junit.Test;
 
 import javax.vecmath.Matrix4d;
+import javax.vecmath.Vector3d;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -25,6 +27,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class TestAlignmentFromTransform {
@@ -32,6 +35,8 @@ public class TestAlignmentFromTransform {
     private static final String BASE_URL = "https://alignment-west.rcsb.org";
     private static final String SUBMISSION_ENDPOINT = "/api/v1-beta/structures/submit";
     private static final String RESULTS_ENDPOINT = "/api/v1-beta/structures/results?uuid=";
+
+    private static final Matrix4d ID_MATRIX = new Matrix4d(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1);
 
     //-F query='{"mode":"pairwise","method":{"name":"fatcat-rigid"},"structures":[{"entry_id":"1FSL","asym_id":"A"},{"entry_id":"4HHB","asym_id":"A"}]}'
 
@@ -47,13 +52,16 @@ public class TestAlignmentFromTransform {
         Structure s1 = StructureIO.getStructure(pdbId1);
         Structure s2 = StructureIO.getStructure(pdbId2);
 
-        computeFatcatAlignment(s1.getPolyChain(asymId1), s2.getPolyChain(asymId2));
+        Chain c1 = s1.getPolyChain(asymId1);
+        Chain c2 = s2.getPolyChain(asymId2);
 
-        Calc.transform(s1.getPolyChain(asymId1), strucAli.matrices.get(0));
-        Calc.transform(s2.getPolyChain(asymId2), strucAli.matrices.get(1));
+        StrucAlignment strucAliSelf = computeFatcatAlignment(c1, c2);
 
-        AtomGroupSequence atoms1 = new AtomGroupSequence(s1.getPolyChain(asymId1).getAtomGroups());
-        AtomGroupSequence atoms2 = new AtomGroupSequence(s2.getPolyChain(asymId2).getAtomGroups());
+        Calc.transform(c1, strucAli.matrices.get(0));
+        Calc.transform(c2, strucAli.matrices.get(1));
+
+        AtomGroupSequence atoms1 = new AtomGroupSequence(c1.getAtomGroups());
+        AtomGroupSequence atoms2 = new AtomGroupSequence(c2.getAtomGroups());
         long start = System.currentTimeMillis();
         Alignment ali = NeedlemanWunschGotoh.align(atoms1, atoms2, 6, 1);
         long end = System.currentTimeMillis();
@@ -155,9 +163,22 @@ public class TestAlignmentFromTransform {
         // Print text output
         System.out.println(afpChain.toFatcat(ca1,ca2));
 
-        System.out.println(afpChain.getAlnseq1());
-        System.out.println(afpChain.getAlnseq2());
+        // assuming 1 block
+        Matrix m = afpChain.getBlockRotationMatrix()[0];
+        Matrix4d transform = new Matrix4d();
+        for (int i=0; i<3; i++) {
+            for (int j=0; j<3; j++) {
+                transform.setElement(i, j, m.get(j, i));
+            }
+        }
+        Atom[] translation = afpChain.getBlockShiftVector();
+        // assming 1 block
+        transform.setTranslation(new Vector3d(translation[0].getX(), translation[0].getY(), translation[0].getZ()));
+        transform.setElement(3,3,1);
 
-        return null;
+        List<Matrix4d> transforms = Arrays.asList(ID_MATRIX, transform);
+        List<String> seqs = Arrays.asList(new String(afpChain.getAlnseq1()), new String(afpChain.getAlnseq2()));
+
+        return new StrucAlignment(transforms, seqs);
     }
 }
