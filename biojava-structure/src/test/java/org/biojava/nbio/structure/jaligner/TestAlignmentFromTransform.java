@@ -24,11 +24,11 @@ public class TestAlignmentFromTransform {
     private static final Matrix4d ID_MATRIX = new Matrix4d(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1);
 
     @Test
-    public void testAlignerAgainstRcsbAlignmentService() throws Exception {
+    public void testAlignerAgainstFatcatAlignment() throws Exception {
 
-        String pdbId1 = "1OJ6";
+        String pdbId1 = "4HGX";
         String asymId1 = "A";
-        String pdbId2 = "4HHB";
+        String pdbId2 = "3NGF";
         String asymId2 = "A";
 
         Structure s1 = StructureIO.getStructure(pdbId1);
@@ -46,15 +46,25 @@ public class TestAlignmentFromTransform {
         Calc.transform(c1, strucAli.matrices.get(0));
         Calc.transform(c2, strucAli.matrices.get(1));
 
-        AtomGroupSequence atoms1 = new AtomGroupSequence(c1.getAtomGroups());
-        AtomGroupSequence atoms2 = new AtomGroupSequence(c2.getAtomGroups());
+        GroupSequence atoms1 = new GroupSequence(c1.getAtomGroups());
+        GroupSequence atoms2 = new GroupSequence(c2.getAtomGroups());
+        GroupSequencePairScorer scorer = new GroupSequencePairScorer(atoms1, atoms2, 8.0);
+
         long start = System.currentTimeMillis();
-        Alignment ali = NeedlemanWunschGotoh.align(atoms1, atoms2, 8f, 0.5f);
+        Alignment ali = NeedlemanWunschGotoh.align(atoms1, atoms2, scorer,10f, 1f);
         long end = System.currentTimeMillis();
+
+        // the aligner will swap to have longer sequence first, here we unswap to have the original order
+        char[] seq1 = ali.getSequence1();
+        char[] seq2 = ali.getSequence2();
+        if (atoms1.length() < atoms2.length()) {
+            seq1 = ali.getSequence2();
+            seq2 = ali.getSequence1();
+        }
         System.out.println("Alignment from transform (calculated in " + (end-start) + "ms)");
-        System.out.println(ali.getSequence1());
+        System.out.println(seq1);
         System.out.println(ali.getMarkupLine());
-        System.out.println(ali.getSequence2());
+        System.out.println(seq2);
     }
 
     private static class StrucAlignment {

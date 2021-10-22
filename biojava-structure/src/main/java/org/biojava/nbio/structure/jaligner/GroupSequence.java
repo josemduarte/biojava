@@ -29,37 +29,22 @@ import java.util.List;
 /**
  * A sequence of atom groups to be used in dynamic programming alignment.
  * 
- * @author Ahmed Moustafa
+ * @author Jose Duarte
  */
 
-public class AtomGroupSequence implements Serializable {
+public class GroupSequence implements Serializable, Sequence<Group> {
 
 	private static final long serialVersionUID = 3256721801357898297L;
 
-	/**
-	 * Sequence
-	 */
 	private List<Group> atomGroups;
-
-	/**
-	 * Sequence id.
-	 */
-	private String id = null;
-
-	/**
-	 * Constructor
-	 */
-	public AtomGroupSequence() {
-		super();
-	}
+	private String id;
 
 	/**
 	 * Constructor
 	 * 
 	 * @param atomGroups
 	 */
-	public AtomGroupSequence(List<Group> atomGroups) {
-		super();
+	public GroupSequence(List<Group> atomGroups) {
 		this.atomGroups = atomGroups;
 	}
 
@@ -82,11 +67,7 @@ public class AtomGroupSequence implements Serializable {
 		this.atomGroups = atomGroups;
 	}
 
-	/**
-	 * Returns the sequence id
-	 * 
-	 * @return Returns the id
-	 */
+	@Override
 	public String getId() {
 		return id;
 	}
@@ -101,11 +82,7 @@ public class AtomGroupSequence implements Serializable {
 		this.id = id;
 	}
 
-	/**
-	 * Returns the length of the sequence
-	 * 
-	 * @return sequence length
-	 */
+	@Override
 	public int length() {
 		return this.atomGroups.size();
 	}
@@ -119,20 +96,17 @@ public class AtomGroupSequence implements Serializable {
 		return atomGroups.stream().map(g->g.getAtom("CA")).toArray(Atom[]::new);
 	}
 
-	public char[] toCharArray() {
-		char[] chars = new char[atomGroups.size()];
-		for (int i=0; i<atomGroups.size(); i++) {
-			chars[i] = StructureTools.get1LetterCodeAmino(atomGroups.get(i).getPDBName());
-		}
-		return chars;
-	}
-    
-    /**
-     * Returns the sequence id and the sequence string
-     * 
-     * @return Returns the sequence id and the sequence string
-     */
     public String toString() {
         return id + Commons.TAB + atomGroups;
     }
+
+	@Override
+	public Group getElement(int i) {
+		return atomGroups.get(i);
+	}
+
+	@Override
+	public char getCharAt(int i) {
+		return StructureTools.get1LetterCodeAmino(getElement(i).getPDBName());
+	}
 }

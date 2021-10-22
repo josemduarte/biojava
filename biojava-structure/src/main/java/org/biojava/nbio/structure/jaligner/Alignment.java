@@ -114,9 +114,9 @@ public final class Alignment {
 	 */
 	private int gaps;
 
-	private AtomGroupSequence originalSequence1;
+	private Sequence<?> originalSequence1;
 
-	private AtomGroupSequence originalSequence2;
+	private Sequence<?> originalSequence2;
 
 	/**
 	 * Constructor for Alignment
@@ -527,28 +527,28 @@ public final class Alignment {
 	}
 
 	/**
-	 * Returns original {@link AtomGroupSequence} #1
+	 * Returns original {@link Sequence} #1
 	 * 
-	 * @return original {@link AtomGroupSequence} #1
+	 * @return original {@link Sequence} #1
 	 */
-	public AtomGroupSequence getOriginalSequence1() {
+	public Sequence<?> getOriginalSequence1() {
 		return originalSequence1;
 	}
 
 	/**
-	 * 
+	 *
 	 * @param originalSequence1
 	 */
-	public void setOriginalSequence1(AtomGroupSequence originalSequence1) {
+	public void setOriginalSequence1(Sequence<?> originalSequence1) {
 		this.originalSequence1 = originalSequence1;
 	}
 
 	/**
-	 * Returns original {@link AtomGroupSequence} #2
+	 * Returns original {@link Sequence} #2
 	 * 
-	 * @return original {@link AtomGroupSequence} #2
+	 * @return original {@link Sequence} #2
 	 */
-	public AtomGroupSequence getOriginalSequence2() {
+	public Sequence<?> getOriginalSequence2() {
 		return originalSequence2;
 	}
 
@@ -556,7 +556,7 @@ public final class Alignment {
 	 * 
 	 * @param originalSequence2
 	 */
-	public void setOriginalSequence2(AtomGroupSequence originalSequence2) {
+	public void setOriginalSequence2(Sequence<?> originalSequence2) {
 		this.originalSequence2 = originalSequence2;
 	}
 

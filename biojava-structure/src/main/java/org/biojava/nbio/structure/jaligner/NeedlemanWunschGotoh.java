@@ -17,8 +17,8 @@
  */
 package org.biojava.nbio.structure.jaligner;
 
-
-import org.biojava.nbio.structure.Atom;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An implementation of the Needleman-Wunsch algorithm with Gotoh's improvement
@@ -30,6 +30,8 @@ import org.biojava.nbio.structure.Atom;
  */
 
 public final class NeedlemanWunschGotoh {
+
+    private static final Logger logger = LoggerFactory.getLogger(NeedlemanWunschGotoh.class);
 
     /**
      * Hidden constructor
@@ -45,6 +47,8 @@ public final class NeedlemanWunschGotoh {
      *            sequence #1
      * @param s2
      *            sequence #2
+     * @param scorer
+     *            the scorer that produces similarity scores for each i, j pair
      * @param o
      *            open gap penalty
      * @param e
@@ -53,12 +57,14 @@ public final class NeedlemanWunschGotoh {
      *         alignment score and alignment statistics
      * @see Matrix
      */
-    public static Alignment align(AtomGroupSequence s1, AtomGroupSequence s2, float o, float e) {
+    public static Alignment align(Sequence<?> s1, Sequence<?> s2, SequencePairScorer scorer, float o, float e) {
 
-        AtomGroupSequence _s1;
-        AtomGroupSequence _s2;
+        // TODO is there a way not to invert. The scorer passed doesn't know about the inversion!!!
+        Sequence<?> _s1;
+        Sequence<?> _s2;
 
         if (s1.length() < s2.length()) {
+            logger.info("Inverting order of sequences");
             _s1 = s2;
             _s2 = s1;
         } else {
@@ -86,7 +92,7 @@ public final class NeedlemanWunschGotoh {
             lengths[j] = j;
         }
 
-        Cell cell = construct(_s1, _s2, o, e, pointers, lengths);
+        Cell cell = construct(_s1.length(), _s2.length(), scorer, o, e, pointers, lengths);
 
         Alignment alignment = traceback(_s1, _s2, pointers, cell, lengths);
 
@@ -103,10 +109,12 @@ public final class NeedlemanWunschGotoh {
     /**
      * Constructs directions matrix for the traceback.
      * 
-     * @param s1
-     *            sequence #1
-     * @param s2
-     *            sequence #2
+     * @param length1
+     *            length of sequence #2
+     * @param length2
+     *            length of sequence #2
+     * @param scorer
+     *            the scorer that produces similarity scores for each i, j pair
      * @param o
      *            open gap penalty
      * @param e
@@ -116,15 +124,10 @@ public final class NeedlemanWunschGotoh {
      * 
      * @return The cell where the traceback starts.
      */
-    private static Cell construct(AtomGroupSequence s1, AtomGroupSequence s2, float o, float e, byte[] pointers, int[] lengths) {
+    private static Cell construct(int length1, int length2, SequencePairScorer scorer, float o, float e, byte[] pointers, int[] lengths) {
 
-        //logger.info("Started...");
-
-        Atom[] a1 = s1.toAtomArray();
-        Atom[] a2 = s2.toAtomArray();
-
-        int m = s1.length() + 1; // number of rows in similarity matrix
-        int n = s2.length() + 1; // number of columns in similarity matrix
+        int m = length1 + 1; // number of rows in similarity matrix
+        int n = length2 + 1; // number of columns in similarity matrix
 
         float[] v = new float[n];
         float vDiagonal = 0;// Float.NEGATIVE_INFINITY; // best score in cell
@@ -153,9 +156,7 @@ public final class NeedlemanWunschGotoh {
             v[0] = -o - (i - 1) * e;
             for (int j = 1, l = k + 1; j < n; j++, l++) { // for all columns
 
-                // TODO find a more solid inversion procedure
-                // TODO calculate only below 10 cutoff
-                similarityScore = (float) (50.0 - a1[i - 1].getCoordsAsPoint3d().distance(a2[j - 1].getCoordsAsPoint3d()));
+                similarityScore = (float) scorer.score (i - 1, j - 1);
 
                 f = vDiagonal + similarityScore;// from diagonal
 
@@ -209,7 +210,7 @@ public final class NeedlemanWunschGotoh {
         Cell cell = new Cell();
         cell.set(maxi, maxj, v[n - 1]);
 
-        //logger.info("Finished.");
+        //logger.info("Calculated {} distances during Cell construct. n*m is {}", distancesCalced, s1.length()*s2.length());
 
         return cell;
     }
@@ -231,11 +232,11 @@ public final class NeedlemanWunschGotoh {
      * @see Cell
      * @see Alignment
      */
-    private static Alignment traceback(AtomGroupSequence s1, AtomGroupSequence s2, byte[] pointers, Cell cell, int[] lengths) {
+    private static Alignment traceback(Sequence<?> s1, Sequence<?> s2, byte[] pointers, Cell cell, int[] lengths) {
         //logger.info("Started...");
 
-        char[] array1 = s1.toCharArray();
-        char[] array2 = s2.toCharArray();
+        //char[] array1 = s1.toCharArray();
+        //char[] array2 = s2.toCharArray();
         //float[][] scores = m.getScores();
 
         Alignment alignment = new Alignment();
@@ -267,14 +268,14 @@ public final class NeedlemanWunschGotoh {
         int b = s2.length() - 1;
         if (a - i > b - j) {
             for (; a - i > b - j; a--) {
-                reversed1[len1++] = array1[a];
+                reversed1[len1++] = s1.getCharAt(a);
                 reversed2[len2++] = Alignment.GAP;
                 reversed3[len3++] = Markups.GAP;
                 gaps++;
             }
             for (; b > j - 1; a--, b--) {
-                c1 = array1[a];
-                c2 = array2[b];
+                c1 = s1.getCharAt(a);
+                c2 = s2.getCharAt(b);
 
                 reversed1[len1++] = c1;
                 reversed2[len2++] = c2;
@@ -293,13 +294,13 @@ public final class NeedlemanWunschGotoh {
         } else {
             for (; b - j > a - i; b--) {
                 reversed1[len1++] = Alignment.GAP;
-                reversed2[len2++] = array2[b];
+                reversed2[len2++] = s2.getCharAt(b);
                 reversed3[len3++] = Markups.GAP;
                 gaps++;
             }
             for (; a > i - 1; a--, b--) {
-                c1 = array1[a];
-                c2 = array2[b];
+                c1 = s1.getCharAt(a);
+                c2 = s2.getCharAt(b);
 
                 reversed1[len1++] = c1;
                 reversed2[len2++] = c2;
@@ -324,7 +325,7 @@ public final class NeedlemanWunschGotoh {
             switch (pointers[l]) {
             case Directions.UP:
                 for (int k = 0, len = lengths[l]; k < len; k++) {
-                    reversed1[len1++] = array1[--i];
+                    reversed1[len1++] = s1.getCharAt(--i);
                     reversed2[len2++] = Alignment.GAP;
                     reversed3[len3++] = Markups.GAP;
                     row -= n;
@@ -332,8 +333,8 @@ public final class NeedlemanWunschGotoh {
                 }
                 break;
             case Directions.DIAGONAL:
-                c1 = array1[--i];
-                c2 = array2[--j];
+                c1 = s1.getCharAt(--i);
+                c2 = s2.getCharAt(--j);
                 reversed1[len1++] = c1;
                 reversed2[len2++] = c2;
                 row -= n;
@@ -351,7 +352,7 @@ public final class NeedlemanWunschGotoh {
             case Directions.LEFT:
                 for (int k = 0, len = lengths[l]; k < len; k++) {
                     reversed1[len1++] = Alignment.GAP;
-                    reversed2[len2++] = array2[--j];
+                    reversed2[len2++] = s2.getCharAt(--j);
                     reversed3[len3++] = Markups.GAP;
                     gaps++;
                 }
