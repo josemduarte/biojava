@@ -1,5 +1,8 @@
 package org.biojava.nbio.structure.jaligner;
 
+import org.biojava.nbio.core.alignment.matrices.SimpleSubstitutionMatrix;
+import org.biojava.nbio.core.alignment.template.SubstitutionMatrix;
+import org.biojava.nbio.core.sequence.compound.AminoAcidCompound;
 import org.biojava.nbio.structure.Atom;
 import org.biojava.nbio.structure.Calc;
 import org.biojava.nbio.structure.Chain;
@@ -13,6 +16,7 @@ import org.biojava.nbio.structure.align.fatcat.FatCatRigid;
 import org.biojava.nbio.structure.align.model.AFPChain;
 import org.biojava.nbio.structure.jama.Matrix;
 import org.junit.Test;
+import static org.junit.Assert.*;
 
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Vector3d;
@@ -113,5 +117,21 @@ public class TestAlignmentFromTransform {
             sb.append(c);
         }
         return sb.toString();
+    }
+
+    @Test
+    public void testAminoacidSequenceAlignment() {
+        AminoacidSequence seq1 = new AminoacidSequence("AWVVYGRF");
+        AminoacidSequence seq2 = new AminoacidSequence("AWYGRF");
+        SubstitutionMatrix<AminoAcidCompound> m = SimpleSubstitutionMatrix.getBlosum62();
+        AminoacidSequencePairScorer scorer = new AminoacidSequencePairScorer(seq1, seq2, m);
+        Alignment ali = NeedlemanWunschGotoh.align(seq1, seq2, scorer,10f, 1f);
+
+        String aliSeq1 = new String(ali.getSequence1());
+        String aliSeq2 = new String(ali.getSequence2());
+        System.out.println(aliSeq1);
+        System.out.println(aliSeq2);
+        assertEquals("AWVVYGRF", aliSeq1);
+        assertEquals("AW--YGRF", aliSeq2);
     }
 }

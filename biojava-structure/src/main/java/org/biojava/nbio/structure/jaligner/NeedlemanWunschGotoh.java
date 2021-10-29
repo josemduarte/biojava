@@ -55,7 +55,6 @@ public final class NeedlemanWunschGotoh {
      *            extend gap penalty
      * @return alignment object contains the two aligned sequences, the
      *         alignment score and alignment statistics
-     * @see Matrix
      */
     public static Alignment align(Sequence<?> s1, Sequence<?> s2, SequencePairScorer scorer, float o, float e) {
 

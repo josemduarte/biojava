@@ -19,6 +19,11 @@
 package org.biojava.nbio.structure.jaligner;
 
 
+import org.biojava.nbio.core.alignment.template.SubstitutionMatrix;
+import org.biojava.nbio.core.sequence.compound.AminoAcidCompound;
+import org.biojava.nbio.core.sequence.compound.AminoAcidCompoundSet;
+import org.biojava.nbio.core.sequence.template.Compound;
+
 import java.text.DecimalFormat;
 
 /**
@@ -28,6 +33,8 @@ import java.text.DecimalFormat;
  */
 
 public final class Alignment {
+
+	private static final AminoAcidCompoundSet AMINO_ACID_COMPOUND_SET = new AminoAcidCompoundSet();
 
 	/**
 	 * Gap character
@@ -47,7 +54,7 @@ public final class Alignment {
 	/**
 	 * Scoring matrix
 	 */
-	private Matrix matrix;
+	private SubstitutionMatrix<AminoAcidCompound> matrix;
 
 	/**
 	 * Gap open cost
@@ -139,21 +146,6 @@ public final class Alignment {
 	 */
 	public void setExtend(float extend) {
 		this.extend = extend;
-	}
-
-	/**
-	 * @return Returns the matrix.
-	 */
-	public Matrix getMatrix() {
-		return matrix;
-	}
-
-	/**
-	 * @param matrix
-	 *            The matrix to set.
-	 */
-	public void setMatrix(Matrix matrix) {
-		this.matrix = matrix;
 	}
 
 	/**
@@ -366,7 +358,7 @@ public final class Alignment {
 		buffer.append("Length #2: " + getOriginalSequence2().length());
 		buffer.append(Commons.getLineSeparator());
 		buffer.append("Matrix: "
-				+ (matrix.getId() == null ? "" : matrix.getId()));
+				+ (matrix.getName() == null ? "" : matrix.getName()));
 		buffer.append(Commons.getLineSeparator());
 		buffer.append("Gap open: " + open);
 		buffer.append(Commons.getLineSeparator());
@@ -434,7 +426,9 @@ public final class Alignment {
 			}
 			// the next characters in boths sequences are not gaps
 			else {
-				calcScore += matrix.getScore(c1, c2);
+				AminoAcidCompound amino1 = AMINO_ACID_COMPOUND_SET.getCompoundForString(String.valueOf(c1));
+				AminoAcidCompound amino2 = AMINO_ACID_COMPOUND_SET.getCompoundForString(String.valueOf(c2));
+				calcScore += matrix.getValue(amino1, amino2);
 				previous1wasGap = false;
 				previous2wasGap = false;
 			}
@@ -505,7 +499,9 @@ public final class Alignment {
 			}
 			// the next characters in boths sequences are not gaps
 			else {
-				calcScore += matrix.getScore(c1, c2);
+				AminoAcidCompound amino1 = AMINO_ACID_COMPOUND_SET.getCompoundForString(String.valueOf(c1));
+				AminoAcidCompound amino2 = AMINO_ACID_COMPOUND_SET.getCompoundForString(String.valueOf(c2));
+				calcScore += matrix.getValue(amino1, amino2);
 				previous1wasGap = false;
 				previous2wasGap = false;
 			}
@@ -591,78 +587,6 @@ public final class Alignment {
 	}
 
 	/**
-	 * Adds this alignment to another alignment, the order is important.
-	 * 
-	 * @param a1
-	 *            The 1st alignment
-	 * @param a2
-	 *            The 2nd alignment
-	 * @return the sum of two alignment
-	 */
-//	public static Alignment add(Alignment a1, Alignment a2) {
-//
-//		if (a1 == null) {
-//			if (a2 == null) {
-//				return null;
-//			} else {
-//				return copy(a2);
-//			}
-//		} else {
-//			if (a2 == null) {
-//				return copy(a1);
-//			} else {
-//				Alignment sum = new Alignment();
-//
-//				StringBuffer buffer = new StringBuffer();
-//
-//				buffer.append(a1.getOriginalSequence1());
-//				buffer.append(a2.getOriginalSequence1());
-//
-//				sum.setOriginalSequence1(new AtomGroupSequence(buffer.toString()));
-//
-//				buffer = new StringBuffer();
-//
-//				buffer.append(a1.getOriginalSequence2());
-//				buffer.append(a2.getOriginalSequence2());
-//
-//				sum.setOriginalSequence2(new AtomGroupSequence(buffer.toString()));
-//
-//				buffer = new StringBuffer();
-//
-//				buffer.append(a1.getSequence1());
-//				buffer.append(a2.getSequence1());
-//
-//				sum.setSequence1(buffer.toString().toCharArray());
-//
-//				buffer = new StringBuffer();
-//
-//				buffer.append(a1.getSequence2());
-//				buffer.append(a2.getSequence2());
-//
-//				sum.setSequence2(buffer.toString().toCharArray());
-//
-//				buffer = new StringBuffer();
-//
-//				buffer.append(a1.getMarkupLine());
-//				buffer.append(a2.getMarkupLine());
-//
-//				sum.setMarkupLine(buffer.toString().toCharArray());
-//
-//				sum.setScore(a1.getScore() + a2.getScore());
-//				sum.setGaps(a1.getGaps() + a2.getGaps());
-//
-//				sum.setStart1(a1.getStart1());
-//				sum.setStart2(a1.getStart2());
-//				sum.setExtend(a1.getExtend());
-//				sum.setOpen(a1.getOpen());
-//				sum.setMatrix(a1.getMatrix());
-//
-//				return sum;
-//			}
-//		}
-//	}
-
-	/**
 	 * Copies an alignment to another alignment.
 	 * 
 	 * @param alignment
@@ -681,7 +605,6 @@ public final class Alignment {
 		copy.setStart2(alignment.getStart2());
 		copy.setExtend(alignment.getExtend());
 		copy.setOpen(alignment.getOpen());
-		copy.setMatrix(alignment.getMatrix());
 		copy.setOriginalSequence1(alignment.getOriginalSequence1());
 		copy.setOriginalSequence2(alignment.getOriginalSequence2());
 
