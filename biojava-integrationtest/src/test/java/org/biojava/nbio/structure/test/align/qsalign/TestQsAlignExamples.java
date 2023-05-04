@@ -62,7 +62,7 @@ public class TestQsAlignExamples {
 		assertEquals(result.length(), 4);
 		assertEquals(result.getRelation(), QsRelation.EQUIVALENT);
 		assertEquals(result.getRmsd(), 0.0, 0.01);
-
+		assertTrue(result.getTmScore() > 0.95);
 	}
 
 	/**
@@ -82,7 +82,6 @@ public class TestQsAlignExamples {
 
 		assertEquals(result.length(), 0);
 		assertEquals(result.getRelation(), QsRelation.DIFFERENT);
-
 	}
 
 	/**
@@ -103,8 +102,8 @@ public class TestQsAlignExamples {
 
 		assertEquals(result.length(), 3);
 		assertEquals(result.getRelation(), QsRelation.EQUIVALENT);
-		assertTrue(result.getRmsd() < 10.0);
-
+		assertTrue(result.getRmsd() < 5.0);
+		assertTrue(result.getTmScore() > 0.8);
 	}
 
 	/**
@@ -125,7 +124,8 @@ public class TestQsAlignExamples {
 
 		assertEquals(result.length(), 12);
 		assertEquals(result.getRelation(), QsRelation.EQUIVALENT);
-		assertTrue(result.getRmsd() < 10.0);
+		assertTrue(result.getRmsd() < 5.0);
+		assertTrue(result.getTmScore() > 0.8);
 	}
 
 	/**
@@ -147,8 +147,8 @@ public class TestQsAlignExamples {
 
 		assertEquals(result.length(), 2);
 		assertEquals(result.getRelation(), QsRelation.PARTIAL_COMPLETE);
-		assertTrue(result.getRmsd() < 10.0);
-
+		assertTrue(result.getRmsd() < 5.0);
+		assertTrue(result.getTmScore() > 0.7);
 	}
 
 	/**
@@ -170,7 +170,8 @@ public class TestQsAlignExamples {
 
 		assertEquals(result.length(), 8);
 		assertEquals(result.getRelation(), QsRelation.PARTIAL_INCOMPLETE);
-		assertTrue(result.getRmsd() < 10.0);
+		assertTrue(result.getRmsd() < 5.0);
+		assertTrue(result.getTmScore() > 0.8);
 	}
 
 }

@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import javax.vecmath.Matrix4d;
 
 import org.biojava.nbio.structure.Atom;
+import org.biojava.nbio.structure.StructureException;
 import org.biojava.nbio.structure.align.multiple.MultipleAlignment;
 import org.biojava.nbio.structure.align.multiple.util.MultipleAlignmentScorer;
 import org.biojava.nbio.structure.cluster.Subunit;
@@ -183,6 +184,24 @@ public class QsAlignResult {
 			return MultipleAlignmentScorer.getRMSD(alignment);
 
 		return alignment.getScore(MultipleAlignmentScorer.RMSD);
+	}
+
+	/**
+	 * The TM-score between the equivalent residues of the equivalent Subunits after
+	 * superposition of the Subunit groups.
+	 * @return the TM-score
+	 */
+	public double getTmScore() {
+		if (alignment == null)
+			return -1.0;
+		if (alignment.getScore(MultipleAlignmentScorer.AVGTM_SCORE) == null) {
+			try {
+				return MultipleAlignmentScorer.getAvgTMScore(alignment);
+			} catch (StructureException e) {
+				throw new RuntimeException("The aligned members of MultipleAlignment don't match the expected lengths. This is a bug, please report it. Error: " + e.getMessage(), e);
+			}
+		}
+		return alignment.getScore(MultipleAlignmentScorer.AVGTM_SCORE);
 	}
 
 	/**
