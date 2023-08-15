@@ -173,7 +173,7 @@ public class GetDistanceMatrix {
 				try {
 					cb = Calc.createVirtualCBAtom(aa);
 				} catch (StructureException e1) {
-					logger.info("Could not create a virtual CB atom for residue {} ({})", g1.getResidueNumber(), g1.getPDBName());
+					logger.debug("Could not create a virtual CB atom for residue {} ({})", g1.getResidueNumber(), g1.getPDBName());
 					// cb will be null
 				}
 			}

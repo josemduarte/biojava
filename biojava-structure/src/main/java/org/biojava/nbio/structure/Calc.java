@@ -976,7 +976,7 @@ public class Calc {
 	 * @return a "virtual" CB atom
 	 * @throws StructureException
 	 */
-	public static final Atom createVirtualCBAtom(AminoAcid amino)
+	public static Atom createVirtualCBAtom(AminoAcid amino)
 			throws StructureException{
 
 		AminoAcid  ala = StandardAminoAcid.getAminoAcid("ALA");
