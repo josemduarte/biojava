@@ -51,7 +51,7 @@ public class CutDomain {
 	public  void cutDomain(Domain dom, CutSites cut_sites, PDPDistanceMatrix pdpMatrix){
 
 		if ( verbose )
-		System.out.println("  B ... beginning of cutDomain " +dom + " cutsites: " + cut_sites );
+			System.out.println("  B ... beginning of cutDomain " +dom + " cutsites: " + cut_sites );
 
 		/* recursive function to cut input domain into two domains */
 
@@ -71,7 +71,7 @@ public class CutDomain {
 
 		site = cut.cut(ca,dom,val, dist, pdpMatrix);
 		if ( verbose )
-		System.out.println("  S ... site " + dom + " : site: " + site + " val : " + val);
+			System.out.println("  S ... site " + dom + " : site: " + site + " val : " + val);
 
 		if(site<0) {
 

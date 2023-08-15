@@ -38,9 +38,6 @@ import java.util.List;
  */
 public class Domain implements Comparable<Domain>, Serializable{
 
-	/**
-	 *
-	 */
 	private static final long serialVersionUID = -1293994033102271366L;
 
 	String id;
@@ -59,11 +56,9 @@ public class Domain implements Comparable<Domain>, Serializable{
 	}
 
 
-
 	public void setId(String id) {
 		this.id = id;
 	}
-
 
 
 	@Override
@@ -125,8 +120,6 @@ public class Domain implements Comparable<Domain>, Serializable{
 	public void setSegments(List<Segment> segments) {
 		this.segments = segments;
 	}
-
-
 
 }
 

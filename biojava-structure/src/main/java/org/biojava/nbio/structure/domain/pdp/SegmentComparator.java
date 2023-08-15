@@ -28,7 +28,6 @@ public class SegmentComparator implements Comparator<Segment>, Serializable {
 
 	@Override
 	public int compare(Segment v1, Segment v2) {
-
 		return v1.compareTo(v2);
 	}
 }

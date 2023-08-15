@@ -29,22 +29,21 @@ public class ShortSegmentRemover {
 
 		int ndom = domains.size();
 
-		for(int j=0;j<ndom;j++) {
+		for (int j=0; j<ndom; j++) {
 
 			int n=0;
 			boolean allshort=true;
 			// count the length of segments for this domain.
-			for (int i=0;i<domains.get(j).nseg;i++) {
-				int seglen=(domains.get(j).getSegmentAtPos(i).getTo()-domains.get(j).getSegmentAtPos(i).getFrom()+1);
-				if(seglen>=30) allshort = false;
-				n+=seglen;
+			for (int i=0; i<domains.get(j).nseg; i++) {
+				int seglen = (domains.get(j).getSegmentAtPos(i).getTo() - domains.get(j).getSegmentAtPos(i).getFrom() + 1);
+				if (seglen>=30) allshort = false;
+				n += seglen;
 			}
 
-			if(n<PDPParameters.MIN_DOMAIN_LENGTH||allshort) {
+			if (n < PDPParameters.MIN_DOMAIN_LENGTH || allshort) {
 				ndom--;
 				domains.remove(j);
 				j--;
-
 			}
 		}
 	}

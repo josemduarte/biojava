@@ -199,14 +199,9 @@ public class ClusterDomains {
 		return domains;
 	}
 
-
-
 	private static long getTotalContacts(List<Domain> domains,
 			PDPDistanceMatrix pdpDistMatrix, Domain i, Domain j) {
 		long total_contacts=0;
-
-
-
 
 		for(int k=0;k<i.nseg;k++) {
 			for(int l=0;l<j.nseg;l++) {
@@ -256,8 +251,7 @@ public class ClusterDomains {
 
 	}
 
-	private static long calc_S (int a1,int b1,int a2,int b2, PDPDistanceMatrix pdpDistMatrix)
-	{
+	private static long calc_S (int a1,int b1,int a2,int b2, PDPDistanceMatrix pdpDistMatrix) {
 
 		long contacts = 0;
 
@@ -270,7 +264,7 @@ public class ClusterDomains {
 		return contacts;
 	}
 
-	private static final void listdomains(List<Domain> domains){
+	private static void listdomains(List<Domain> domains){
 
 		int i = -1;
 		for ( Domain dom : domains){

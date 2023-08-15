@@ -195,7 +195,7 @@ public class Cut {
 
 		/* check double cuts */
 		if ( verbose )
-		System.out.println("  --- checking double cuts up to: " + nclose);
+			System.out.println("  --- checking double cuts up to: " + nclose);
 		nc=0;
 		for(l=0;l<nclose;l++) {
 

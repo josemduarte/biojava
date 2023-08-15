@@ -29,19 +29,18 @@ import org.biojava.nbio.structure.domain.pdp.*;
 import java.util.List;
 
 
-/** Protein Domain Parser is a an algorithm that attempts at assigning domains for 3D protein structures.
+/**
+ * Protein Domain Parser is a an algorithm that attempts at assigning domains for 3D protein structures.
  * Since domains in proteins are difficult to define, results detected by automated algorithms have to be taken with a grain of salt.
+ * <br/>
+ * See<pre>
+ * J Mol Biol. 2004 Jun 4;339(3):647-78.
  *
- *   see<pre>
-J Mol Biol. 2004 Jun 4;339(3):647-78.
-
-Toward consistent assignment of structural domains in proteins.
-
-Veretnik S, Bourne PE, Alexandrov NN, Shindyalov IN.
-</pre>
-
+ * Toward consistent assignment of structural domains in proteins.
+ *
+ * Veretnik S, Bourne PE, Alexandrov NN, Shindyalov IN.
+ * </pre>
  * This implementation is based on a Java port of the PDP algorithm, as described in:
- *
  *
  * @author Andreas Prlic
  * @since 3.0.2
@@ -60,29 +59,25 @@ public class LocalProteinDomainParser {
 	 *
 	 * @param s the protein structure
 	 * @return a list of possible domains
-	 * @throws StructureException
 	 */
-	public static List<Domain> suggestDomains(Structure s) throws StructureException{
-
+	public static List<Domain> suggestDomains(Structure s) {
 		Atom[] ca = StructureTools.getRepresentativeAtomArray(s);
 
 		return suggestDomains(ca);
 	}
 
-
-	/** Suggest domains for a set of Calpha atoms
+	/**
+	 * Suggest domains for a set of Calpha atoms
 	 *
 	 * @param ca an array of Calpha atoms
 	 * @return a list of possible domains
 	 * @throws StructureException
 	 */
-	public static List<Domain> suggestDomains(Atom[] ca) throws StructureException{
+	public static List<Domain> suggestDomains(Atom[] ca){
 
 		GetDistanceMatrix distMaxCalculator = new GetDistanceMatrix();
 
 		PDPDistanceMatrix pdpMatrix = distMaxCalculator.getDistanceMatrix(ca);
-
-
 
 		Domain dom = new Domain();
 		Chain c = ca[0].getGroup().getChain();
@@ -99,17 +94,12 @@ public class LocalProteinDomainParser {
 		cutDomain.cutDomain(dom, cutSites, pdpMatrix);
 		List<Domain> domains =  cutDomain.getDomains();
 
-
 		//
 		domains = ClusterDomains.cluster(domains, pdpMatrix);
 
 		ShortSegmentRemover.cleanup(domains);
 
-
 		return domains;
-
 	}
-
-
 
 }

@@ -51,6 +51,4 @@ public class CutSites {
 		this.cut_sites = cut_sites;
 	}
 
-
-
 }
