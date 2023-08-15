@@ -20,11 +20,8 @@
  */
 package org.biojava.nbio.structure.domain.pdp;
 
-import org.biojava.nbio.structure.AminoAcid;
 import org.biojava.nbio.structure.Atom;
 import org.biojava.nbio.structure.Calc;
-import org.biojava.nbio.structure.Group;
-import org.biojava.nbio.structure.StructureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +38,7 @@ public class GetDistanceMatrix {
 	public PDPDistanceMatrix getDistanceMatrix(Atom[] protein) {
 		int[][] dist = new int[protein.length+3][protein.length+3];
 		int i,j;
-		double d,dt1,dt2,dt3,dt4;
+		double d;
 		int nclose=0;
 		int[] iclose = new int[protein.length*protein.length];
 		int[] jclose= new int[protein.length*protein.length];
@@ -49,6 +46,12 @@ public class GetDistanceMatrix {
 		if(protein.length >= PDPParameters.MAXLEN) {
 			throw new IllegalArgumentException(String.format("The given atom array of length %d is larger than the max allowed length %d", protein.length, PDPParameters.MAXLEN));
 		}
+
+		double dt1 = 81;
+		double dt2 = 64;
+		double dt3 = 49;
+		double dt4 = 36;
+
 		for (i=0; i<protein.length; i++) {
 			for (j=i; j<protein.length; j++) {
 				dist[i][j] = 0;
@@ -58,35 +61,9 @@ public class GetDistanceMatrix {
 
 				Atom ca1 = protein[i];
 				Atom ca2 = protein[j];
-				Group g1 = ca1.getGroup();
-				Group g2 = ca2.getGroup();
 
-				Atom cb1 = getCBeta(g1);
-				Atom cb2 = getCBeta(g2);
-				boolean hasCbeta1 = cb1 != null;
-				boolean hasCbeta2 = cb2 != null;
-
-				dt1 = 81;
-				dt2 = 64;
-				dt3 = 49;
-				dt4 = 36;
-
-				if (hasCbeta1 && hasCbeta2) {
-					double distance = Calc.getDistance(cb1, cb2);
-					d += distance * distance;
-				}
-				else if (hasCbeta1 && !hasCbeta2) {
-					double distance = Calc.getDistance(cb1, ca2);
-					d += distance * distance;
-				}
-				else if (!hasCbeta1 && hasCbeta2) {
-					double distance = Calc.getDistance(ca1, cb2);
-					d += distance * distance;
-				}
-				else if ( ! hasCbeta1 && !hasCbeta2) {
-					double distance = Calc.getDistance(ca1, ca2);
-					d += distance * distance;
-				}
+				double distance = Calc.getDistance(ca1, ca2);
+				d += distance * distance;
 
 				if (d < dt1) {
 					dist[i][j]=1;
@@ -157,27 +134,6 @@ public class GetDistanceMatrix {
 		matrix.setDist(dist);
 		return matrix;
 
-	}
-
-	private Atom getCBeta(Group g1) {
-		if (g1 == null) return null;
-
-		Atom cb = null;
-
-		cb = g1.getAtom("CB");
-		if (cb == null) {
-			if ( g1 instanceof AminoAcid) {
-				AminoAcid aa = (AminoAcid) g1;
-
-				try {
-					cb = Calc.createVirtualCBAtom(aa);
-				} catch (StructureException e1) {
-					logger.debug("Could not create a virtual CB atom for residue {} ({})", g1.getResidueNumber(), g1.getPDBName());
-					// cb will be null
-				}
-			}
-		}
-		return cb;
 	}
 
 }
