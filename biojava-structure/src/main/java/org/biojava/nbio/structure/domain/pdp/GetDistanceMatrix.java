@@ -76,7 +76,7 @@ public class GetDistanceMatrix {
 					double distance = Calc.getDistance(cb1, cb2);
 					d += distance * distance;
 				}
-				else if (hasCbeta1 && ! hasCbeta2) {
+				else if (hasCbeta1 && !hasCbeta2) {
 					double distance = Calc.getDistance(cb1, ca2);
 					d += distance * distance;
 				}
@@ -161,6 +161,8 @@ public class GetDistanceMatrix {
 	}
 
 	private Atom getCBeta(Group g1) {
+		if (g1 == null) return null;
+
 		Atom cb = null;
 
 		cb = g1.getAtom("CB");
