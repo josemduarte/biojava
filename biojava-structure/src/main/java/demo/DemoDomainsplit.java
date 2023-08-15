@@ -22,6 +22,7 @@ package demo;
 
 
 import org.biojava.nbio.structure.Structure;
+import org.biojava.nbio.structure.StructureException;
 import org.biojava.nbio.structure.align.util.AtomCache;
 import org.biojava.nbio.structure.domain.LocalProteinDomainParser;
 import org.biojava.nbio.structure.domain.pdp.Domain;
@@ -32,7 +33,7 @@ import java.util.List;
 
 public class DemoDomainsplit {
 
-	public static void main(String[] args){
+	public static void main(String[] args) throws StructureException {
 
 		DemoDomainsplit split = new DemoDomainsplit();
 
@@ -43,45 +44,38 @@ public class DemoDomainsplit {
 
 	}
 
-	public void basicLoad(String pdbId){
+	public void basicLoad(String pdbId) throws StructureException {
 
-		try {
+		// This utility class can automatically download missing PDB files.
+		AtomCache cache = new AtomCache();
 
-			// This utility class can automatically download missing PDB files.
-			AtomCache cache = new AtomCache();
+		// configure the parameters of file parsing (optional)
 
-			//
-			// configure the parameters of file parsing (optional)
+		FileParsingParameters params = new FileParsingParameters();
 
-			FileParsingParameters params = new FileParsingParameters();
+		// should the ATOM and SEQRES residues be aligned when creating the internal data model?
+		params.setAlignSeqRes(true);
+		// should secondary structure get parsed from the file
+		params.setParseSecStruc(false);
 
-			// should the ATOM and SEQRES residues be aligned when creating the internal data model?
-			params.setAlignSeqRes(true);
-			// should secondary structure get parsed from the file
-			params.setParseSecStruc(false);
+		// and set the params in the cache.
+		cache.setFileParsingParams(params);
 
-			// and set the params in the cache.
-			cache.setFileParsingParams(params);
+		// end of optional part
 
-			// end of optional part
+		Structure struc = cache.getStructure(pdbId);
 
-			Structure struc = cache.getStructure(pdbId);
+		System.out.println("structure loaded: " + struc);
 
-			System.out.println("structure loaded: " + struc);
+		List<Domain> domains = LocalProteinDomainParser.suggestDomains(struc);
 
-			List<Domain> domains = LocalProteinDomainParser.suggestDomains(struc);
-
-			System.out.println("RESULTS: =====");
-			for ( Domain dom : domains){
-				System.out.println("DOMAIN:" + dom.getSize() + " " +  dom.getScore());
-				List<Segment> segments = dom.getSegments();
-				for ( Segment s : segments){
-					System.out.println("   Segment: " + s);
-				}
+		System.out.println("RESULTS: =====");
+		for (Domain dom : domains) {
+			System.out.println("DOMAIN:" + dom.getSize() + " " + dom.getScore());
+			List<Segment> segments = dom.getSegments();
+			for (Segment s : segments) {
+				System.out.println("   Segment: " + s);
 			}
-		} catch (Exception e){
-			e.printStackTrace();
 		}
-
 	}
 }

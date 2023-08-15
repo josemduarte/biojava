@@ -20,7 +20,6 @@
  */
 package org.biojava.nbio.structure.domain.pdp;
 
-
 import org.biojava.nbio.structure.AminoAcid;
 import org.biojava.nbio.structure.Atom;
 import org.biojava.nbio.structure.Calc;
@@ -180,13 +179,5 @@ public class GetDistanceMatrix {
 		}
 		return cb;
 	}
-
-
-
-
-
-
-
-
 
 }

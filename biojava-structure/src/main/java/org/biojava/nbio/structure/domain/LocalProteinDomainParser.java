@@ -71,7 +71,6 @@ public class LocalProteinDomainParser {
 	 *
 	 * @param ca an array of Calpha atoms
 	 * @return a list of possible domains
-	 * @throws StructureException
 	 */
 	public static List<Domain> suggestDomains(Atom[] ca){
 
