@@ -48,14 +48,16 @@ import java.util.List;
 public class LocalProteinDomainParser {
 
 
-	/** make sure this class can only get accessed via the static method calls
+	/**
+	 * make sure this class can only get accessed via the static method calls
 	 *
 	 */
 	private LocalProteinDomainParser(){
 
 	}
 
-	/** Suggest domains for a protein structure
+	/**
+	 * Suggest domains for a protein structure
 	 *
 	 * @param s the protein structure
 	 * @return a list of possible domains

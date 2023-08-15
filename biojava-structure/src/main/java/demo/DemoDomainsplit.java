@@ -22,7 +22,6 @@ package demo;
 
 
 import org.biojava.nbio.structure.Structure;
-import org.biojava.nbio.structure.StructureException;
 import org.biojava.nbio.structure.align.util.AtomCache;
 import org.biojava.nbio.structure.domain.LocalProteinDomainParser;
 import org.biojava.nbio.structure.domain.pdp.Domain;
@@ -33,7 +32,7 @@ import java.util.List;
 
 public class DemoDomainsplit {
 
-	public static void main(String[] args) throws StructureException {
+	public static void main(String[] args) throws Exception {
 
 		DemoDomainsplit split = new DemoDomainsplit();
 
@@ -44,7 +43,7 @@ public class DemoDomainsplit {
 
 	}
 
-	public void basicLoad(String pdbId) throws StructureException {
+	public void basicLoad(String pdbId) throws Exception {
 
 		// This utility class can automatically download missing PDB files.
 		AtomCache cache = new AtomCache();
