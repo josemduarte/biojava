@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.biojava.nbio.structure.align.util.AtomCache;
 import org.biojava.nbio.structure.contact.Grid;
@@ -287,6 +288,9 @@ public class SubstructureIdentifier implements StructureIdentifier {
 						for(Chain chain : s.getNonPolyChainsByPDB(chainName, modelNr) ) {
 							StructureTools.addGroupsToStructure(newS, chain.getAtomGroups(), modelNr, false);
 						}
+						for(Chain chain : s.getBranchedChainsByPDB(chainName, modelNr) ) {
+							StructureTools.addGroupsToStructure(newS, chain.getAtomGroups(), modelNr, false);
+						}
 						Chain waters = s.getWaterChainByPDB(chainName, modelNr);
 						if( waters != null) {
 							StructureTools.addGroupsToStructure(newS, waters.getAtomGroups(), modelNr, false);
@@ -359,7 +363,7 @@ public class SubstructureIdentifier implements StructureIdentifier {
 			return;
 		grid.addAtoms(nonwaters);
 
-		full.getNonPolyChains(fromModel).stream() //potential ligand chains
+		Stream.concat(full.getNonPolyChains(fromModel).stream(), full.getBranchedChains(fromModel).stream()) //potential ligand chains
 		.flatMap((chain) -> chain.getAtomGroups().stream() ) // potential ligand groups
 		.filter( (g) -> !g.isWater() ) // ignore waters
 		.filter( (g) -> !g.isPolymeric() ) // already shouldn't be polymeric, but filter anyways

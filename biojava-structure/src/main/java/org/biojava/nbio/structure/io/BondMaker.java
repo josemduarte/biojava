@@ -348,12 +348,14 @@ public class BondMaker {
 
 		try {
 			// The PDB format uses author chain ids to reference chains. But one author chain id corresponds to multiple asym ids,
-			// thus we need to grab all the possible asym ids (poly and nonpoly) and then try to find the atoms
+			// thus we need to grab all the possible asym ids (poly, nonpoly, branched and water) and then try to find the atoms
 			// See issue https://github.com/biojava/biojava/issues/943
 			Chain polyChain1 = structure.getPolyChainByPDB(linkRecord.getChainID1());
 			Chain polyChain2 = structure.getPolyChainByPDB(linkRecord.getChainID2());
 			List<Chain> nonpolyChains1 = structure.getNonPolyChainsByPDB(linkRecord.getChainID1());
 			List<Chain> nonpolyChains2 = structure.getNonPolyChainsByPDB(linkRecord.getChainID2());
+			List<Chain> branchedChains1 = structure.getBranchedChainsByPDB(linkRecord.getChainID1());
+			List<Chain> branchedChains2 = structure.getBranchedChainsByPDB(linkRecord.getChainID2());
 			Chain waterChain1 = structure.getWaterChainByPDB(linkRecord.getChainID1());
 			Chain waterChain2 = structure.getWaterChainByPDB(linkRecord.getChainID2());
 
@@ -363,6 +365,8 @@ public class BondMaker {
 			if (polyChain2!=null) allChainIds2.add(polyChain2.getId());
 			if (nonpolyChains1!=null) nonpolyChains1.forEach(npc -> allChainIds1.add(npc.getId()));
 			if (nonpolyChains2!=null) nonpolyChains2.forEach(npc -> allChainIds2.add(npc.getId()));
+			branchedChains1.forEach(bc -> allChainIds1.add(bc.getId()));
+			branchedChains2.forEach(bc -> allChainIds2.add(bc.getId()));
 			if (waterChain1!=null && "HOH".equals(linkRecord.getResName1())) allChainIds1.add(waterChain1.getId());
 			if (waterChain2!=null && "HOH".equals(linkRecord.getResName2())) allChainIds2.add(waterChain2.getId());
 

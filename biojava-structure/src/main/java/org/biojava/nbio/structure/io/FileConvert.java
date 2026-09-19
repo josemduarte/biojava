@@ -26,6 +26,7 @@ import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -195,7 +196,9 @@ public class FileConvert {
 			}
 
 			List<Chain> polyChains = structure.getPolyChains(m);
-			List<Chain> nonPolyChains = structure.getNonPolyChains(m);
+			// PDB format has no notion of branched entities: they are written as HETATMs together with the non-polymers
+			List<Chain> nonPolyChains = new ArrayList<>(structure.getNonPolyChains(m));
+			nonPolyChains.addAll(structure.getBranchedChains(m));
 			List<Chain> waterChains = structure.getWaterChains(m);
 
 			for (Chain chain : polyChains) {

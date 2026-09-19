@@ -184,6 +184,10 @@ public class StructureImpl implements Structure {
 				groups.addAll(chain.getAtomGroups());
 			}
 
+			for (Chain chain: getBranchedChainsByPDB(chainName, modelIdx)) {
+				groups.addAll(chain.getAtomGroups());
+			}
+
 			Chain water = getWaterChainByPDB(chainName, modelIdx);
 
 			if (water!=null)
@@ -504,6 +508,19 @@ public class StructureImpl implements Structure {
 	}
 
 	@Override
+	public List<Chain> getBranchedChains() {
+		if (models.isEmpty()) {
+			return new ArrayList<>(0);
+		}
+		return getBranchedChains(0);
+	}
+
+	@Override
+	public List<Chain> getBranchedChains(int modelIdx) {
+		return models.get(modelIdx).getBranchedChains();
+	}
+
+	@Override
 	public List<Chain> getWaterChains() {
 		if (models.isEmpty()) {
 			return new ArrayList<>(0);
@@ -636,6 +653,48 @@ public class StructureImpl implements Structure {
 
 		List<Chain> nonpolyChains = model.getNonPolyChains();
 		for (Chain c : nonpolyChains){
+			if (c.getName().equals(authId))
+				chains.add(c);
+		}
+
+		return chains;
+	}
+
+	@Override
+	public Chain getBranchedChain(String asymId) {
+		return getBranchedChain(asymId, 0);
+	}
+
+	@Override
+	public Chain getBranchedChain(String asymId, int modelIdx) {
+		Model model = models.get(modelIdx);
+		if (model==null) {
+			return null;
+		}
+
+		List<Chain> branchedChains = model.getBranchedChains();
+		for (Chain c : branchedChains){
+			if (c.getId().equals(asymId))
+				return c;
+		}
+		return null;
+	}
+
+	@Override
+	public List<Chain> getBranchedChainsByPDB(String authId) {
+		return getBranchedChainsByPDB(authId, 0);
+	}
+
+	@Override
+	public List<Chain> getBranchedChainsByPDB(String authId, int modelIdx) {
+		List<Chain> chains = new ArrayList<>();
+		Model model = models.get(modelIdx);
+		if (model==null) {
+			return chains;
+		}
+
+		List<Chain> branchedChains = model.getBranchedChains();
+		for (Chain c : branchedChains){
 			if (c.getName().equals(authId))
 				chains.add(c);
 		}

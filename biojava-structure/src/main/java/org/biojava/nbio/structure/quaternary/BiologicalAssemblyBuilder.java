@@ -117,11 +117,14 @@ public class BiologicalAssemblyBuilder {
 			} else {
 				Chain polyC = asymUnit.getPolyChainByPDB(transformation.getChainId());
 				List<Chain> nonPolyCs = asymUnit.getNonPolyChainsByPDB(transformation.getChainId());
+				List<Chain> branchedCs = asymUnit.getBranchedChainsByPDB(transformation.getChainId());
 				Chain waterC = asymUnit.getWaterChainByPDB(transformation.getChainId());
 				if (polyC!=null)
 					chainsToTransform.add(polyC);
 				if (!nonPolyCs.isEmpty())
 					chainsToTransform.addAll(nonPolyCs);
+				if (!branchedCs.isEmpty())
+					chainsToTransform.addAll(branchedCs);
 				if (waterC!=null)
 					chainsToTransform.add(waterC);
 			}

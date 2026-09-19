@@ -563,20 +563,21 @@ public class AtomCache {
 			map = new AtomPositionMap(StructureTools.getAllAtomArray(fullStructure), AtomPositionMap.ANYTHING_MATCHER);
 			rrs = ResidueRangeAndLength.parseMultiple(domain.getRanges(), map);
 		}
-		for (Chain chain : fullStructure.getNonPolyChains()) {
+		List<Chain> ligandChains = new ArrayList<>(fullStructure.getNonPolyChains());
+		ligandChains.addAll(fullStructure.getBranchedChains());
+		for (Chain chain : ligandChains) {
 			if (!structure.hasPdbChain(chain.getName())) {
 				continue; // we can't do anything with a chain our domain
 			}
 
-			Chain newChain;
-			if (!structure.hasNonPolyChain(chain.getId())) {
+			// asym ids are unique across chain types, so this finds either the non-poly or the branched chain
+			Chain newChain = structure.getChain(chain.getId());
+			if (newChain == null) {
 				newChain = new ChainImpl();
 				newChain.setId(chain.getId());
 				newChain.setName(chain.getName());
 				newChain.setEntityInfo(chain.getEntityInfo());
 				structure.addChain(newChain);
-			} else {
-				newChain = structure.getNonPolyChain(chain.getId());
 			}
 
 			List<Group> ligands = StructureTools.filterLigands(chain.getAtomGroups());
@@ -761,7 +762,8 @@ public class AtomCache {
 
 		// add the ligands of the chain...
 		Chain newChain = n.getPolyChainByPDB(structureName.getChainId());
-		List<Chain> origChains = s.getNonPolyChainsByPDB(structureName.getChainId());
+		List<Chain> origChains = new ArrayList<>(s.getNonPolyChainsByPDB(structureName.getChainId()));
+		origChains.addAll(s.getBranchedChainsByPDB(structureName.getChainId()));
 		for (Chain origChain : origChains) {
 			List<Group> ligands = origChain.getAtomGroups();
 

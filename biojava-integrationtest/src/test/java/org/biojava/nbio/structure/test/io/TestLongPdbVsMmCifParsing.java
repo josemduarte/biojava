@@ -633,6 +633,7 @@ public class TestLongPdbVsMmCifParsing {
 
 	private boolean containsSugar(Structure s) {
 		for (EntityInfo e:s.getEntityInfos()) {
+			if (e.getType() == EntityType.BRANCHED) return true;
 			if (e.getDescription().contains("SUGAR")) return true;
 		}
 		return false;

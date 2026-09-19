@@ -43,11 +43,13 @@ public class Model implements Serializable {
 
 	private List<Chain> polyChains;
 	private List<Chain> nonPolyChains;
+	private List<Chain> branchedChains;
 	private List<Chain> waterChains;
 
 	public Model(){
 		polyChains = new ArrayList<>();
 		nonPolyChains = new ArrayList<>();
+		branchedChains = new ArrayList<>();
 		waterChains = new ArrayList<>();
 	}
 
@@ -59,12 +61,21 @@ public class Model implements Serializable {
 		return nonPolyChains;
 	}
 
+	/**
+	 * Get the branched chains (entity type 'branched', mainly carbohydrates)
+	 * @return
+	 * @since 7.3.0
+	 */
+	public List<Chain> getBranchedChains() {
+		return branchedChains;
+	}
+
 	public List<Chain> getWaterChains() {
 		return waterChains;
 	}
 
 	/**
-	 * Get all chains: polymeric, non-polymeric and water
+	 * Get all chains: polymeric, non-polymeric, branched and water
 	 * @return
 	 */
 	public List<Chain> getChains(){
@@ -72,6 +83,7 @@ public class Model implements Serializable {
 
 		chains.addAll(polyChains);
 		chains.addAll(nonPolyChains);
+		chains.addAll(branchedChains);
 		chains.addAll(waterChains);
 
 		chains.trimToSize();
@@ -83,6 +95,7 @@ public class Model implements Serializable {
 
 		polyChains.clear();
 		nonPolyChains.clear();
+		branchedChains.clear();
 		waterChains.clear();
 
 		for (Chain c : modelChains){
@@ -111,8 +124,7 @@ public class Model implements Serializable {
 			nonPolyChains.add(c);
 
 		} else if (info.getType() == EntityType.BRANCHED) {
-			logger.warn("Chain with asym id {} (author id {}) has entity type 'branched', considering it non-polymeric", c.getId(), c.getName());
-			nonPolyChains.add(c);
+			branchedChains.add(c);
 
 		} else {
 			logger.warn("Chain with asym id {} (author id {}) has unsupported entity type '{}'. Will not add it to the Structure.", c.getId(), c.getName(), info.getType().toString());
@@ -122,15 +134,15 @@ public class Model implements Serializable {
 	}
 
 	/**
-	 * Returns the total number of chains in this model: polymeric, non-polymeric and water
+	 * Returns the total number of chains in this model: polymeric, non-polymeric, branched and water
 	 * @return
 	 */
 	public int size() {
-		return polyChains.size() + nonPolyChains.size() + waterChains.size();
+		return polyChains.size() + nonPolyChains.size() + branchedChains.size() + waterChains.size();
 	}
 
 	@Override
 	public String toString() {
-		return "["+polyChains.size()+" poly chains, "+nonPolyChains.size()+" non-poly chains, "+waterChains.size()+" water chains]";
+		return "["+polyChains.size()+" poly chains, "+nonPolyChains.size()+" non-poly chains, "+branchedChains.size()+" branched chains, "+waterChains.size()+" water chains]";
 	}
 }

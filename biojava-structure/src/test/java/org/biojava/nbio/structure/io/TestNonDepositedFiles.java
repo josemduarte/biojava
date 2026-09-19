@@ -488,15 +488,17 @@ public class TestNonDepositedFiles {
 		assertEquals(2, structure.getEntityById(1).getChains().size());
 		assertEquals(2, structure.getEntityById(2).getChains().size());
 
-		// we consider the branched chains non-poly chains
-		assertEquals(4, structure.getNonPolyChains().size());
+		// the branched chains are kept separate from the non-poly chains
+		assertEquals(4, structure.getBranchedChains().size());
+		assertEquals(0, structure.getNonPolyChains().size());
 		assertEquals(4, structure.getPolyChains().size());
 
 		assertEquals(1, structure.getEntityById(3).getChains().size());
+		assertEquals(EntityType.BRANCHED, structure.getEntityById(3).getType());
 
 		// chain asym_id="E" is from entity 3
-		assertSame(structure.getNonPolyChain("E"), structure.getEntityById(3).getChains().get(0));
+		assertSame(structure.getBranchedChain("E"), structure.getEntityById(3).getChains().get(0));
 
-		assertEquals(5, structure.getNonPolyChain("E").getAtomGroups().size());
+		assertEquals(5, structure.getBranchedChain("E").getAtomGroups().size());
 	}
 }

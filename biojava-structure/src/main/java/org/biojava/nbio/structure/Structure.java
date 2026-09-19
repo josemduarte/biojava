@@ -307,6 +307,27 @@ public interface Structure extends Cloneable, Serializable {
 	List<Chain> getNonPolyChains(int modelIdx);
 
 	/**
+	 * Return all branched chains (entity type 'branched', mainly carbohydrates) for the first model.
+	 * Branched chains are only available when parsing mmCIF files that annotate them. They are
+	 * not included in {@link #getNonPolyChains()}.
+	 *
+	 * @return all branched chains.
+	 * @since 7.3.0
+	 */
+	List<Chain> getBranchedChains();
+
+	/**
+	 * Return all branched chains (entity type 'branched', mainly carbohydrates) for the given model index.
+	 * Branched chains are only available when parsing mmCIF files that annotate them. They are
+	 * not included in {@link #getNonPolyChains(int)}.
+	 *
+	 * @param modelIdx the model index
+	 * @return all branched chains.
+	 * @since 7.3.0
+	 */
+	List<Chain> getBranchedChains(int modelIdx);
+
+	/**
 	 * Return all water chains for the first model
 	 * @return
 	 * @since 5.0
@@ -401,24 +422,26 @@ public interface Structure extends Cloneable, Serializable {
 	Group findGroup(String authId, String pdbResnum, int modelIdx) throws StructureException;
 
 	/**
-	 * Retrieve a Chain (polymeric, non-polymeric or water) based on
+	 * Retrieve a Chain (polymeric, non-polymeric, branched or water) based on
 	 * the 'internal' chain id (asymId) for the first model
 	 * @param asymId the asymId (chainId)
 	 * @return
 	 * @see #getPolyChain(String)
 	 * @see #getNonPolyChain(String)
+	 * @see #getBranchedChain(String)
 	 * @see #getWaterChain(String)
 	 */
 	Chain getChain(String asymId);
 
 	/**
-	 * Retrieve a Chain (polymeric, non-polymeric or water) based on
+	 * Retrieve a Chain (polymeric, non-polymeric, branched or water) based on
 	 * the 'internal' chain id (asymId) for the given model index
 	 * @param asymId the asymId (chainId)
 	 * @param modelIdx the index of the required model (0-based)
 	 * @return
 	 * @see #getPolyChain(String, int)
 	 * @see #getNonPolyChain(String, int)
+	 * @see #getBranchedChain(String, int)
 	 * @see #getWaterChain(String, int)
 	 */
 	Chain getChain(String asymId, int modelIdx);
@@ -512,6 +535,44 @@ public interface Structure extends Cloneable, Serializable {
 	 * @since 5.0
 	 */
 	List<Chain> getNonPolyChainsByPDB(String authId, int modelIdx);
+
+	/**
+	 * Retrieve a branched Chain based on the 'internal' chain
+	 * id (asymId) for the first model
+	 * @param asymId the asymId (chainId)
+	 * @return a branched Chain or null if it can't be found
+	 * @since 7.3.0
+	 */
+	Chain getBranchedChain(String asymId);
+
+	/**
+	 * Retrieve a branched Chain based on the 'internal' chain
+	 * id (asymId) for the given model index
+	 * @param asymId the asymId (chainId)
+	 * @param modelIdx the index of the required model (0-based)
+	 * @return a branched Chain or null if it can't be found
+	 * @since 7.3.0
+	 */
+	Chain getBranchedChain(String asymId, int modelIdx);
+
+	/**
+	 * Retrieve all branched Chains corresponding to the given 'public' chain
+	 * name (authId) for the first model.
+	 * @param authId the author id (chainName, public chain id)
+	 * @return a list of branched Chains, if none found the list will be empty
+	 * @since 7.3.0
+	 */
+	List<Chain> getBranchedChainsByPDB(String authId);
+
+	/**
+	 * Retrieve all branched Chains corresponding to the 'public' chain
+	 * name (authId) and the given model index.
+	 * @param authId the author id (chainName, public chain id)
+	 * @param modelIdx the index of the required model (0-based)
+	 * @return a list of branched Chains, if none found the list will be empty
+	 * @since 7.3.0
+	 */
+	List<Chain> getBranchedChainsByPDB(String authId, int modelIdx);
 
 	/**
 	 * Retrieve a water Chain based on the 'internal' chain id (asymId)

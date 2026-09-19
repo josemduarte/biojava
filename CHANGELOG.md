@@ -16,6 +16,8 @@ BioJava 7.3.0
 * Support for the ECOD distribution format introduced at v294.1 #1141 #1139
 * `StructureInterfaceList.clusterInterfaces()`, which clusters interfaces starting from any
   given clusters and with a custom identifier pair for matching (e.g. `ENTITY_ID_PAIR`)
+* `Structure.getBranchedChains()`, `getBranchedChain(asymId)` and `getBranchedChainsByPDB(authId)`
+  (plus model-index variants) for chains of mmCIF entity type `branched` (carbohydrates)
 
 ### Performance
 * Contact calculation is about 1.5x faster: squared distances compared against a squared cutoff,
@@ -58,6 +60,10 @@ BioJava 7.3.0
   cluster representatives, and `StructureInterfaceCluster.getAverageScore()` is now the average
   score of the members merged into the representative rather than over all pairs of members
 * Integration tests run nightly rather than on every pull request #1137 #1135
+* Chains of entity type `branched` (carbohydrates, mmCIF/BinaryCIF only) are stored separately and
+  are no longer returned by `Structure.getNonPolyChains()` and related methods. Code that relied on
+  those to get glycans should also call `getBranchedChains()`. `getChains()` still returns all chains.
+  PDB-format files carry no entity types, so their carbohydrates are still non-polymer chains
 * Tests migrated to JUnit 5 #1125 #1126 #1038
 * Library upgrades #1130 #1132
 
